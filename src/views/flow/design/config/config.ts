@@ -57,17 +57,17 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 	edgeTextDraggable: false, // 允许边文本可以拖拽。
 	nodeTextDraggable: false, // 允许节点文本可以拖拽。
 	plugins: [
-		BpmnElement,
-		MiniMap,
+		// BpmnElement,
+		// MiniMap,
 		FlowPath,
 		AutoLayout,
 		// DndPanel,
 		// ProximityConnect ,
 		Menu,
 		ContextMenu,
-		Group,
+		// Group,
 		Control,
-		BpmnXmlAdapter,
+		// BpmnXmlAdapter,
 		Snapshot,
 		SelectionSelect,
 	],
