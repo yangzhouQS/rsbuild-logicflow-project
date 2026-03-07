@@ -1,0 +1,222 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  height: 100vh;
+  background: var(--sidebar-bg-color);
+  border-right: 1px solid var(--border-color-light);
+  overflow: hidden;
+  transition: width 0.3s ease, background 0.3s ease;
+  box-shadow: var(--box-shadow-light);
+
+  &--collapsed {
+    width: 64px;
+
+    .sidebar__logo-text {
+      display: none;
+    }
+
+    .sidebar__collapse {
+      justify-content: center;
+      padding: 0 12px;
+    }
+
+    // 折叠状态下菜单项图标居中
+    .sidebar__menu-wrapper {
+      .el-menu-item,
+      .el-sub-menu__title {
+        margin: 2px 8px;
+        padding: 0 !important;
+        justify-content: center;
+
+        .el-icon {
+          margin-right: 0 !important;
+        }
+      }
+    }
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 64px;
+    padding: 0 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+
+    &-img {
+      max-width: 36px;
+      max-height: 36px;
+      object-fit: contain;
+    }
+
+    &-text {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  &__menu-wrapper {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px 0;
+
+    .el-scrollbar__view {
+      height: 100%;
+    }
+
+    // Element Plus Menu 样式覆盖
+    .el-menu {
+      border-right: none;
+      background-color: transparent;
+    }
+
+    // 菜单项基础样式
+    .el-menu-item,
+    .el-sub-menu__title {
+      height: 48px;
+      line-height: 48px;
+      margin: 2px 12px;
+      border-radius: 8px;
+      color: var(--text-color-regular);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        background-color: var(--fill-color-light) !important;
+        color: var(--color-primary);
+      }
+
+      .el-icon {
+        color: var(--text-color-secondary);
+        font-size: 18px;
+        transition: color 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      &:hover .el-icon {
+        color: var(--color-primary);
+      }
+    }
+
+    // 激活状态样式
+    .el-menu-item.is-active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+
+      .el-icon {
+        color: #ffffff;
+      }
+    }
+
+    // 子菜单样式
+    .el-sub-menu {
+      .el-menu {
+        background-color: transparent;
+      }
+
+      .el-menu-item {
+        padding-left: 56px !important;
+        min-width: auto;
+        height: 44px;
+        line-height: 44px;
+        font-size: 13px;
+        color: var(--text-color-secondary);
+
+        &:hover {
+          background-color: var(--fill-color-light) !important;
+          color: var(--color-primary);
+        }
+
+        &.is-active {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+        }
+      }
+    }
+
+    // 子菜单打开状态
+    .el-sub-menu.is-opened {
+      > .el-sub-menu__title {
+        color: var(--color-primary);
+        background-color: var(--fill-color-light);
+        border-radius: 8px;
+
+        .el-icon {
+          color: var(--color-primary);
+        }
+      }
+    }
+
+    // 折叠状态下的样式
+    .el-menu--collapse {
+      .el-sub-menu__title {
+        span,
+        .el-sub-menu__icon-arrow {
+          display: none;
+        }
+      }
+    }
+  }
+
+  &__collapse {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 48px;
+    padding: 0 20px;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    background-color: var(--fill-color-blank);
+    border-top: 1px solid var(--border-color-light);
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: var(--color-primary);
+      background-color: var(--fill-color-light);
+    }
+
+    .el-icon {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover .el-icon {
+      transform: scale(1.1);
+    }
+  }
+}
+
+//深色模式下的特殊样式调整
+:root.dark {
+  .sidebar {
+    &__logo {
+      background: linear-gradient(135deg, #4c51bf 0%, #6b46c1 100%);
+    }
+  }
+
+  .sidebar__menu-wrapper {
+    .el-menu-item.is-active,
+    .el-sub-menu .el-menu-item.is-active {
+      background: linear-gradient(135deg, #4c51bf 0%, #6b46c1 100%) !important;
+      box-shadow: 0 4px 12px rgba(76, 81, 191, 0.4);
+    }
+  }
+}

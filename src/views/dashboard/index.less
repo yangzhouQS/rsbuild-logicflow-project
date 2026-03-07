@@ -1,0 +1,76 @@
+.dashboard-page {
+  .stat-card {
+    &__content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    &__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      font-size: 28px;
+      color: #fff;
+
+      &--primary {
+        background: linear-gradient(135deg, #409EFF, #66b1ff);
+      }
+
+      &--success {
+        background: linear-gradient(135deg, #67C23A, #85ce61);
+      }
+
+      &--warning {
+        background: linear-gradient(135deg, #E6A23C, #ebb563);
+      }
+
+      &--danger {
+        background: linear-gradient(135deg, #F56C6C, #f78989);
+      }
+    }
+
+    &__info {
+      flex: 1;
+    }
+
+    &__value {
+      font-size: 28px;
+      font-weight: 600;
+      color: #303133;
+    }
+
+    &__label {
+      font-size: 14px;
+      color: #909399;
+      margin-top: 4px;
+    }
+  }
+
+  .chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #909399;
+
+    p {
+      margin-top: 16px;
+    }
+  }
+
+  .quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .el-button {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+}

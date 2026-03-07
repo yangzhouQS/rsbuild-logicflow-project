@@ -1,0 +1,175 @@
+/**
+ * 主题 CSS 变量定义
+ * 深色主题为默认主题
+ */
+
+// 主题色（紫色渐变）
+@primary-color: #722ed1;
+@primary-color-light-3: #9254de;
+@primary-color-light-5: #b37feb;
+@primary-color-light-7: #d3adf7;
+@primary-color-light-8: #efdbff;
+@primary-color-light-9: #f9f0ff;
+
+// 功能色
+@success-color: #52c41a;
+@warning-color: #faad14;
+@danger-color: #ff4d4f;
+@info-color: #1890ff;
+
+// ==================== 深色主题（默认） ====================
+:root,
+:root.dark {
+  // 背景色
+  --bg-color: #141414;
+  --bg-color-page: #0a0a0a;
+  --bg-color-overlay: #1d1d1d;
+
+  // 文字色
+  --text-color-primary: rgba(255, 255, 255, 0.95);
+  --text-color-regular: rgba(255, 255, 255, 0.85);
+  --text-color-secondary: rgba(255, 255, 255, 0.65);
+  --text-color-placeholder: rgba(255, 255, 255, 0.45);
+
+  // 边框色
+  --border-color: #424242;
+  --border-color-light: #363636;
+  --border-color-lighter: #2d2d2d;
+  --border-color-extra-light: #262626;
+
+  // 填充色
+  --fill-color: #303030;
+  --fill-color-light: #262626;
+  --fill-color-lighter: #1d1d1d;
+  --fill-color-extra-light: #171717;
+  --fill-color-blank: #1a1a1a;
+
+  // 主题色
+  --color-primary: @primary-color;
+  --color-primary-light-3: @primary-color-light-3;
+  --color-primary-light-5: @primary-color-light-5;
+  --color-primary-light-7: @primary-color-light-7;
+  --color-primary-light-8: @primary-color-light-8;
+  --color-primary-light-9: @primary-color-light-9;
+
+  // 功能色
+  --color-success: @success-color;
+  --color-warning: @warning-color;
+  --color-danger: @danger-color;
+  --color-info: @info-color;
+
+  // 阴影
+  --box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.4);
+  --box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+  --box-shadow-lighter: 0 1px 4px 0 rgba(0, 0, 0, 0.2);
+  --box-shadow-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+
+  // 侧边栏
+  --sidebar-bg-color: #1a1a2e;
+  --sidebar-text-color: rgba(255, 255, 255, 0.85);
+  --sidebar-active-text-color: #b37feb;
+  --sidebar-hover-bg-color: rgba(114, 46, 209, 0.2);
+
+  // 头部
+  --header-bg-color: #1d1d1d;
+  --header-text-color: rgba(255, 255, 255, 0.85);
+  --header-height: 60px;
+
+  // 卡片
+  --card-bg-color: #1d1d1d;
+  --card-border-color: #2d2d2d;
+
+  // 表格
+  --table-header-bg-color: #262626;
+  --table-row-hover-bg-color: rgba(114, 46, 209, 0.1);
+  --table-border-color: #2d2d2d;
+
+  // 输入框
+  --input-bg-color: #1d1d1d;
+  --input-border-color: #424242;
+  --input-hover-border-color: @primary-color;
+  --input-focus-border-color: @primary-color;
+
+  // 标签页
+  --tabs-bg-color: #1d1d1d;
+  --tabs-active-color: @primary-color;
+  --tabs-border-color: #2d2d2d;
+}
+
+// ==================== 浅色主题 ====================
+:root.light {
+  // 背景色
+  --bg-color: #ffffff;
+  --bg-color-page: #f5f5f5;
+  --bg-color-overlay: #ffffff;
+
+  // 文字色
+  --text-color-primary: rgba(0, 0, 0, 0.95);
+  --text-color-regular: rgba(0, 0, 0, 0.85);
+  --text-color-secondary: rgba(0, 0, 0, 0.65);
+  --text-color-placeholder: rgba(0, 0, 0, 0.45);
+
+  // 边框色
+  --border-color: #d9d9d9;
+  --border-color-light: #e4e4e4;
+  --border-color-lighter: #f0f0f0;
+  --border-color-extra-light: #f5f5f5;
+
+  // 填充色
+  --fill-color: #f5f5f5;
+  --fill-color-light: #fafafa;
+  --fill-color-lighter: #ffffff;
+  --fill-color-extra-light: #ffffff;
+  --fill-color-blank: #f8fafc;
+
+  // 主题色
+  --color-primary: @primary-color;
+  --color-primary-light-3: @primary-color-light-3;
+  --color-primary-light-5: @primary-color-light-5;
+  --color-primary-light-7: @primary-color-light-7;
+  --color-primary-light-8: @primary-color-light-8;
+  --color-primary-light-9: @primary-color-light-9;
+
+  // 功能色
+  --color-success: @success-color;
+  --color-warning: @warning-color;
+  --color-danger: @danger-color;
+  --color-info: @info-color;
+
+  // 阴影
+  --box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+  --box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+  --box-shadow-lighter: 0 1px 4px 0 rgba(0, 0, 0, 0.04);
+  --box-shadow-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+
+  // 侧边栏（浅色主题使用浅色背景）
+  --sidebar-bg-color: #ffffff;
+  --sidebar-text-color: rgba(0, 0, 0, 0.85);
+  --sidebar-active-text-color: #722ed1;
+  --sidebar-hover-bg-color: rgba(114, 46, 209, 0.08);
+
+  // 头部
+  --header-bg-color: #ffffff;
+  --header-text-color: rgba(0, 0, 0, 0.85);
+  --header-height: 60px;
+
+  // 卡片
+  --card-bg-color: #ffffff;
+  --card-border-color: #f0f0f0;
+
+  // 表格
+  --table-header-bg-color: #fafafa;
+  --table-row-hover-bg-color: rgba(114, 46, 209, 0.05);
+  --table-border-color: #f0f0f0;
+
+  // 输入框
+  --input-bg-color: #ffffff;
+  --input-border-color: #d9d9d9;
+  --input-hover-border-color: @primary-color;
+  --input-focus-border-color: @primary-color;
+
+  // 标签页
+  --tabs-bg-color: #ffffff;
+  --tabs-active-color: @primary-color;
+  --tabs-border-color: #f0f0f0;
+}
