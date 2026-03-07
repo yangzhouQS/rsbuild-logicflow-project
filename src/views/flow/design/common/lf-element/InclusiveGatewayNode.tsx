@@ -20,6 +20,7 @@ export type IInclusiveGatewayNodeProps = {
  */
 const INCLUSIVE_GATEWAY_ICON = {
   // 菱形边框路径 - 基于60x60的viewBox，中心在(30,30)
+  // 与排他网关使用相同的菱形路径，确保几何形状一致
   diamondPath:
     'M58.585789,28.585789L31.414215,1.4142134L30.000002,0L28.585789,1.4142133L1.4142134,28.585789L0,30.000002L1.4142135,31.414215L28.585789,58.585789L30.000002,60.000004L31.414215,58.585789L58.585789,31.414215L60.000004,30.000002L58.585789,28.585789Z',
   // 内部边框路径
@@ -52,11 +53,10 @@ export class InclusiveGatewayNode<
         // 将整个组移动到节点的中心位置
         transform: `translate(${x}, ${y})`,
       },
-      // 菱形边框
-      // SVG transform执行顺序是从右到左，所以先translate(-30, -30)再scale
+      // 菱形边框 - 不填充背景色
       h('path', {
         d: INCLUSIVE_GATEWAY_ICON.diamondPath,
-        fill: style.fill || 'transparent',
+        fill: 'transparent',
         stroke: style.stroke || iconColor,
         strokeWidth: style.strokeWidth || 2,
         transform: `scale(${scale}) translate(-30, -30)`,

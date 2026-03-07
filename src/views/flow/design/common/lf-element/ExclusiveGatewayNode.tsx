@@ -25,12 +25,6 @@ const EXCLUSIVE_GATEWAY_ICON = {
   // 内部边框路径
   innerBorderPath:
     'M57.171577,30.000002L30.000002,2.8284268L2.8284268,30.000002L30.000002,57.171577L57.171577,30.000002Z',
-  // X图标路径 - 竖线 (相对于30,30中心)
-  xIconVertical:
-    'M29.170242,19.684513L30.829813,19.684513L30.829813,40.226351L29.170242,40.226351Z',
-  // X图标路径 - 横线 (相对于30,30中心)
-  xIconHorizontal:
-    'M19.684513,29.170242L40.226351,29.170242L40.226351,30.829813L19.684513,30.829813Z',
 };
 
 export class ExclusiveGatewayNode<
@@ -49,17 +43,19 @@ export class ExclusiveGatewayNode<
     // 计算缩放比例，将60x60的viewBox缩放到实际节点大小
     const scale = Math.min(width, height) / 60;
 
+    // X图标的线宽，与原始SVG中的矩形宽度一致(约1.66)
+    const xStrokeWidth = 1.66;
+
     return h(
       'g',
       {
         // 将整个组移动到节点的中心位置
         transform: `translate(${x}, ${y})`,
       },
-      // 菱形边框
-      // SVG transform执行顺序是从右到左，所以先translate(-30, -30)再scale
+      // 菱形边框 - 不填充背景色
       h('path', {
         d: EXCLUSIVE_GATEWAY_ICON.diamondPath,
-        fill: style.fill || 'transparent',
+        fill: 'transparent',
         stroke: style.stroke || iconColor,
         strokeWidth: style.strokeWidth || 2,
         transform: `scale(${scale}) translate(-30, -30)`,
@@ -73,16 +69,25 @@ export class ExclusiveGatewayNode<
         strokeOpacity: 0.3,
         transform: `scale(${scale}) translate(-30, -30)`,
       }),
-      // X图标 - 竖线
-      h('path', {
-        d: EXCLUSIVE_GATEWAY_ICON.xIconVertical,
-        fill: iconColor,
+      // X图标 - 使用两条直线，stroke方式确保粗细一致
+      // 左上到右下的斜线
+      h('line', {
+        x1: 20,
+        y1: 20,
+        x2: 40,
+        y2: 40,
+        stroke: iconColor,
+        strokeWidth: xStrokeWidth,
         transform: `scale(${scale}) translate(-30, -30)`,
       }),
-      // X图标 - 横线
-      h('path', {
-        d: EXCLUSIVE_GATEWAY_ICON.xIconHorizontal,
-        fill: iconColor,
+      // 右上到左下的斜线
+      h('line', {
+        x1: 40,
+        y1: 20,
+        x2: 20,
+        y2: 40,
+        stroke: iconColor,
+        strokeWidth: xStrokeWidth,
         transform: `scale(${scale}) translate(-30, -30)`,
       }),
     );
