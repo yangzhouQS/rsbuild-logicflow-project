@@ -49,17 +49,17 @@ export class InclusiveGatewayNode<
     return h(
       'g',
       {
-        // 将整个组移动到节点中心位置
+        // 将整个组移动到节点的中心位置
         transform: `translate(${x}, ${y})`,
       },
-      // 菱形边框 - 使用transform确保从中心缩放
+      // 菱形边框
+      // SVG transform执行顺序是从右到左，所以先translate(-30, -30)再scale
       h('path', {
         d: INCLUSIVE_GATEWAY_ICON.diamondPath,
         fill: style.fill || 'transparent',
         stroke: style.stroke || iconColor,
         strokeWidth: style.strokeWidth || 2,
-        // 先平移到中心(-30,-30)，再缩放
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
       // 内部边框（可选，增加立体感）
       h('path', {
@@ -68,7 +68,7 @@ export class InclusiveGatewayNode<
         stroke: iconColor,
         strokeWidth: 1,
         strokeOpacity: 0.3,
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
       // 圆形图标 - 包容网关的特征
       h('path', {
@@ -76,7 +76,7 @@ export class InclusiveGatewayNode<
         fill: 'transparent',
         stroke: iconColor,
         strokeWidth: 2,
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
     );
   }

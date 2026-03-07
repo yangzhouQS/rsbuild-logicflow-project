@@ -52,17 +52,17 @@ export class ExclusiveGatewayNode<
     return h(
       'g',
       {
-        // 将整个组移动到节点中心位置
+        // 将整个组移动到节点的中心位置
         transform: `translate(${x}, ${y})`,
       },
-      // 菱形边框 - 使用transformOrigin确保从中心缩放
+      // 菱形边框
+      // SVG transform执行顺序是从右到左，所以先translate(-30, -30)再scale
       h('path', {
         d: EXCLUSIVE_GATEWAY_ICON.diamondPath,
         fill: style.fill || 'transparent',
         stroke: style.stroke || iconColor,
         strokeWidth: style.strokeWidth || 2,
-        // 先平移到中心(-30,-30)，再缩放
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
       // 内部边框（可选，增加立体感）
       h('path', {
@@ -71,19 +71,19 @@ export class ExclusiveGatewayNode<
         stroke: iconColor,
         strokeWidth: 1,
         strokeOpacity: 0.3,
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
       // X图标 - 竖线
       h('path', {
         d: EXCLUSIVE_GATEWAY_ICON.xIconVertical,
         fill: iconColor,
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
       // X图标 - 横线
       h('path', {
         d: EXCLUSIVE_GATEWAY_ICON.xIconHorizontal,
         fill: iconColor,
-        transform: `translate(-30, -30) scale(${scale})`,
+        transform: `scale(${scale}) translate(-30, -30)`,
       }),
     );
   }
