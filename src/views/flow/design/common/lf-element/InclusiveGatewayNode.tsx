@@ -61,15 +61,6 @@ export class InclusiveGatewayNode<
         strokeWidth: style.strokeWidth || 2,
         transform: `scale(${scale}) translate(-30, -30)`,
       }),
-      // 内部边框（可选，增加立体感）
-      h('path', {
-        d: INCLUSIVE_GATEWAY_ICON.innerBorderPath,
-        fill: 'transparent',
-        stroke: iconColor,
-        strokeWidth: 1,
-        strokeOpacity: 0.3,
-        transform: `scale(${scale}) translate(-30, -30)`,
-      }),
       // 圆形图标 - 包容网关的特征
       h('path', {
         d: INCLUSIVE_GATEWAY_ICON.circlePath,

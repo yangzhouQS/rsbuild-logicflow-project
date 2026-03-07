@@ -26,10 +26,16 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 			rx: 5,
 			ry: 5,
 			strokeWidth: 2,
+			// 矩形样式
+			radius: 8,
+			stroke: "#3CB371",
 		},
 		circle: {
 			fill: '#f5f5f5',
-			stroke: '#666',
+			// stroke: '#666',
+
+			r: 25,
+			stroke: "#FF6347",
 		},
 		ellipse: {
 			fill: '#dae8fc',
@@ -57,17 +63,11 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 	edgeTextDraggable: false, // 允许边文本可以拖拽。
 	nodeTextDraggable: false, // 允许节点文本可以拖拽。
 	plugins: [
-		// BpmnElement,
-		// MiniMap,
 		FlowPath,
 		AutoLayout,
-		// DndPanel,
-		// ProximityConnect ,
 		Menu,
 		ContextMenu,
-		// Group,
 		Control,
-		// BpmnXmlAdapter,
 		Snapshot,
 		SelectionSelect,
 	],
@@ -92,18 +92,36 @@ export const logicFlowCustomTheme: Partial<LogicFlow.Theme> = {
 		lineHeight: 1.5,
 		fontSize: 13,
 		textWidth: 100,
+		background: {
+			fill: "white",
+		},
 	}, // 确认 textWidth 是否必传
 	polyline: {
-		stroke: 'red',
+		// stroke: 'red',
+		strokeWidth: 1,
 	},
 	rect: {
-		width: 200,
-		height: 40,
+		// 矩形样式
+		radius: 8,
+		stroke: "#3CB371",
+		// width: 200,
+		// height: 40,
 	},
 	arrow: {
-		offset: 4, // 箭头长度
+		offset: 8, // 箭头长度
 		verticalLength: 2, // 箭头垂直于边的距离
 	},
+
+	edgeAnimation: {
+		stroke: '#e6a23c',  // 动画颜色（红色）
+		strokeDasharray: '12,4,6,4',
+		strokeDashoffset: '100%',
+		animationName: 'lf_animate_dash',
+		animationDuration: '20s',
+		animationIterationCount: 'infinite',
+		animationTimingFunction: 'linear',
+		animationDirection: 'normal',
+	}
 };
 
 
