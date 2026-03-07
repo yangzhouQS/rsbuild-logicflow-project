@@ -89,10 +89,10 @@ if (manager) {
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| offsetX | number | 300 | 分流网关和聚合网关之间的水平距离（仅包容网关） |
+| offsetX | number | 350 | 分流网关和聚合网关之间的水平距离（仅包容网关） |
 | taskNodeType | string | 'rect' | 分支任务节点类型 |
 | edgeType | string | 'polyline' | 连线类型 |
-| branchYOffset | number | 80 | 分支Y轴偏移 |
+| branchYOffset | number | 150 | 分支Y轴偏移（每个分支之间的垂直间距） |
 
 ### PairInfo
 

@@ -51,10 +51,10 @@ export interface GatewayPairOptions {
 
 // 默认配置
 const DEFAULT_OPTIONS: Required<GatewayPairOptions> = {
-  offsetX: 300,
+  offsetX: 400,
   taskNodeType: 'rect',
   edgeType: 'polyline',
-  branchYOffset: 80,
+  branchYOffset: 450,  // 每个分支之间的垂直间距（节点高度+文字标签+连线标签）
 };
 
 /**
@@ -325,13 +325,13 @@ export class GatewayPairManager {
         },
       });
 
-      // 4. 创建普通分支2任务节点（中间）
+      // 4. 创建普通分支2任务节点（中间偏下，与网关错开）
       const normalTask2Id = `Task_Normal2_${timestamp}`;
       this.lf.addNode({
         id: normalTask2Id,
         type: taskNodeType,
         x: forkGateway.x + offsetX / 2,
-        y: forkGateway.y,
+        y: forkGateway.y + branchYOffset,
         text: '普通分支2',
         properties: {
           branchType: 'normal',
@@ -340,13 +340,13 @@ export class GatewayPairManager {
         },
       });
 
-      // 5. 创建默认分支任务节点（下方）
+      // 5. 创建默认分支任务节点（最下方）
       const defaultTaskId = `Task_Default_${timestamp}`;
       this.lf.addNode({
         id: defaultTaskId,
         type: taskNodeType,
         x: forkGateway.x + offsetX / 2,
-        y: forkGateway.y + branchYOffset,
+        y: forkGateway.y + branchYOffset * 3,  // 使用3倍偏移，确保与普通分支2有足够间距
         text: '默认分支',
         properties: {
           branchType: 'default',

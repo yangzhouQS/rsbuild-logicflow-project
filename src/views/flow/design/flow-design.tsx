@@ -31,6 +31,20 @@ export const FlowDesign = defineComponent({
 				// console.log(lfRef.value?.getGraphData());
 				console.log(lfRef.value?.getGraphRawData());
 			},
+			autoLayout: () => {
+				const layoutConfig = {
+					rankdir: 'LR',
+					align: '',
+					ranker: 'tight-tree',
+					nodesep: 50,
+					ranksep: 80,
+					isDefaultAnchor: true,
+				}
+				lfRef.value?.extension.dagre?.layout(layoutConfig);
+				// console.log(lfRef.value?.getGraphData());
+				lfRef.value?.fitView();
+				console.log(lfRef.value?.getGraphRawData());
+			},
 			// 获取所有网关配对信息
 			getGatewayPairInfos: () => {
 				const manager = getGatewayBranchManager();
@@ -121,6 +135,7 @@ export const FlowDesign = defineComponent({
 				<div class="flow-design page-container">
 					<el-card class={'flow-design-action'}>
 						<el-button onClick={methods.getFlowData}>获取数据</el-button>
+						<el-button onClick={methods.autoLayout}>自动布局</el-button>
 					</el-card>
 					<div class={'flow-container'}>
 						{/* 左侧拖拽面板 */}
