@@ -487,44 +487,47 @@ export class GatewayPairManager {
           properties: nodeData.properties,
         });
         
-        // 恢复默认分支的边（从分流网关到任务节点）
-        const defaultFlowIn = pairInfo.defaultBranch.flowInId;
-        const flowInEdge = this.lf.getEdgeModelById(defaultFlowIn);
-        if (!flowInEdge) {
-          // 边已被删除，需要恢复
-          this.lf.addEdge({
-            id: defaultFlowIn,
-            type: this.options.edgeType,
-            sourceNodeId: pairInfo.forkId,
-            targetNodeId: nodeData.id,
-            text: '默认',
-            properties: {
-              isDefault: true,
-              branchType: 'default',
-            },
-          });
-          console.log('[保护机制] 已恢复默认分支入口边:', defaultFlowIn);
-        }
-        
-        // 如果是包容网关，还需要恢复从任务节点到聚合网关的边
-        if (pairInfo.joinId && pairInfo.defaultBranch.flowOutId) {
-          const defaultFlowOut = pairInfo.defaultBranch.flowOutId;
-          const flowOutEdge = this.lf.getEdgeModelById(defaultFlowOut);
-          if (!flowOutEdge) {
+         // 使用额外的延迟确保节点完全初始化后再恢复边
+        setTimeout(() => {
+          // 恢复默认分支的边（从分流网关到任务节点）
+          const defaultFlowIn = pairInfo.defaultBranch.flowInId;
+          const flowInEdge = this.lf.getEdgeModelById(defaultFlowIn);
+          if (!flowInEdge) {
             // 边已被删除，需要恢复
             this.lf.addEdge({
-              id: defaultFlowOut,
+              id: defaultFlowIn,
               type: this.options.edgeType,
-              sourceNodeId: nodeData.id,
-              targetNodeId: pairInfo.joinId,
+              sourceNodeId: pairInfo.forkId,
+              targetNodeId: nodeData.id,
+              text: '默认',
               properties: {
-                branchType: 'default',
                 isDefault: true,
+                branchType: 'default',
               },
             });
-            console.log('[保护机制] 已恢复默认分支出口边:', defaultFlowOut);
+            console.log('[保护机制] 已恢复默认分支入口边:', defaultFlowIn);
           }
-        }
+          
+          // 如果是包容网关，还需要恢复从任务节点到聚合网关的边
+          if (pairInfo.joinId && pairInfo.defaultBranch.flowOutId) {
+            const defaultFlowOut = pairInfo.defaultBranch.flowOutId;
+            const flowOutEdge = this.lf.getEdgeModelById(defaultFlowOut);
+            if (!flowOutEdge) {
+              // 边已被删除，需要恢复
+              this.lf.addEdge({
+                id: defaultFlowOut,
+                type: this.options.edgeType,
+                sourceNodeId: nodeData.id,
+                targetNodeId: pairInfo.joinId,
+                properties: {
+                  branchType: 'default',
+                  isDefault: true,
+                },
+              });
+              console.log('[保护机制] 已恢复默认分支出口边:', defaultFlowOut);
+            }
+          }
+        }, 10);  // 等待节点完全初始化
       }, 0);
       
       return false;
@@ -651,17 +654,33 @@ export class GatewayPairManager {
       // 阻止删除默认分支
       console.warn('默认分支不能删除');
 
-      // 重新添加被删除的边
+      // 使用较长的延迟，让 handleNodeDelete 有机会先执行
+      // 如果节点也被删除，handleNodeDelete 会恢复节点和边
+      // 如果只有边被删除，这里会恢复边
       setTimeout(() => {
-        this.lf.addEdge({
-          id: data.id,
-          type: data.type,
-          sourceNodeId: data.sourceNodeId,
-          targetNodeId: data.targetNodeId,
-          text: data.text,
-          properties: data.properties,
-        });
-      }, 0);
+        // 检查节点是否还存在
+        const sourceNode = this.lf.getNodeModelById(data.sourceNodeId);
+        const targetNode = this.lf.getNodeModelById(data.targetNodeId);
+        
+        // 如果两个节点都存在，则恢复边
+        if (sourceNode && targetNode) {
+          // 检查边是否已经被恢复（可能由 handleNodeDelete 恢复）
+          const existingEdge = this.lf.getEdgeModelById(data.id);
+          if (!existingEdge) {
+            this.lf.addEdge({
+              id: data.id,
+              type: data.type,
+              sourceNodeId: data.sourceNodeId,
+              targetNodeId: data.targetNodeId,
+              text: data.text,
+              properties: data.properties,
+            });
+            console.log('[保护机制] 已恢复默认分支边:', data.id);
+          }
+        } else {
+          console.log('[保护机制] 节点不存在，边恢复将由 handleNodeDelete 处理');
+        }
+      }, 10);  // 使用 10ms 延迟
 
       return false;
     }
