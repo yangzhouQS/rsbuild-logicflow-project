@@ -5,8 +5,9 @@
  * 功能：
  * - 排他网关：拖入画布时创建一个排他分支 + 一个默认分支（无聚合节点）
  * - 包容网关：拖入画布时创建一个普通分支 + 一个默认分支 + 聚合网关（成对出现）
- * - 默认分支禁止删除
+ * - 默认分支连线及其后的第一个节点禁止删除
  * - 删除网关时联动删除相关配置
+ * - 连线规则：两点之间只能有一条连线，不能自连接
  */
 import type LogicFlow from '@logicflow/core';
 
@@ -35,6 +36,7 @@ export interface BranchConfig {
   isDefault: boolean;
   isDeletable: boolean;
   pairId: PairInfo;
+  taskId?: string;  // 默认分支的任务节点ID
 }
 
 // 网关分支配置选项
@@ -70,6 +72,7 @@ export class GatewayPairManager {
   private boundHandleNodeDndAdd: (data: { data: any }) => void;
   private boundHandleNodeDelete: (data: { data: any }) => void;
   private boundHandleEdgeDelete: (data: { data: any }) => void;
+  private boundHandleEdgeAdd: (data: { data: any }) => void;
 
   constructor(lf: LogicFlow, options?: GatewayPairOptions) {
     this.lf = lf;
@@ -81,6 +84,7 @@ export class GatewayPairManager {
     this.boundHandleNodeDndAdd = this.handleNodeDndAdd.bind(this);
     this.boundHandleNodeDelete = this.handleNodeDelete.bind(this);
     this.boundHandleEdgeDelete = this.handleEdgeDelete.bind(this);
+    this.boundHandleEdgeAdd = this.handleEdgeAdd.bind(this);
 
     this.init();
   }
@@ -97,6 +101,9 @@ export class GatewayPairManager {
 
     // 监听边删除事件（保护默认分支）
     this.lf.on('edge:delete', this.boundHandleEdgeDelete);
+
+    // 监听边添加事件（验证连线规则）
+    this.lf.on('edge:add', this.boundHandleEdgeAdd);
   }
 
   /**
@@ -231,11 +238,19 @@ export class GatewayPairManager {
 
       this.gatewayPairs.set(forkId, pairInfo);
 
-      // 7. 记录分支配置（默认分支禁止删除）
+      // 7. 记录分支配置（默认分支连线及其任务节点禁止删除）
       this.branchConfigs.set(defaultFlowId, {
         isDefault: true,
         isDeletable: false,
         pairId: pairInfo,
+        taskId: defaultTaskId,  // 记录默认分支的任务节点ID
+      });
+      // 同时记录任务节点的保护配置
+      this.branchConfigs.set(defaultTaskId, {
+        isDefault: true,
+        isDeletable: false,
+        pairId: pairInfo,
+        taskId: defaultTaskId,
       });
 
       console.log('[排他网关] 分支创建完成:', pairInfo);
@@ -417,16 +432,25 @@ export class GatewayPairManager {
       this.gatewayPairs.set(forkId, pairInfo);
       this.gatewayPairs.set(joinId, pairInfo);
 
-      // 10. 记录分支配置（默认分支禁止删除）
+      // 10. 记录分支配置（默认分支连线及其任务节点禁止删除）
       this.branchConfigs.set(defaultFlowId, {
         isDefault: true,
         isDeletable: false,
         pairId: pairInfo,
+        taskId: defaultTaskId,
       });
       this.branchConfigs.set(defaultToJoinFlowId, {
         isDefault: true,
         isDeletable: false,
         pairId: pairInfo,
+        taskId: defaultTaskId,
+      });
+      // 同时记录任务节点的保护配置
+      this.branchConfigs.set(defaultTaskId, {
+        isDefault: true,
+        isDeletable: false,
+        pairId: pairInfo,
+        taskId: defaultTaskId,
       });
 
       console.log('[包容网关] 网关成对创建完成:', pairInfo);
@@ -441,6 +465,71 @@ export class GatewayPairManager {
    * 处理节点删除
    */
   private handleNodeDelete({ data }: { data: any }) {
+    // 检查是否是受保护的默认分支任务节点
+    const nodeConfig = this.branchConfigs.get(data.id);
+    if (nodeConfig && !nodeConfig.isDeletable && nodeConfig.isDefault) {
+      // 阻止删除默认分支的任务节点
+      console.warn('默认分支的任务节点不能删除');
+      
+      // 获取配对信息，用于恢复相关的边
+      const pairInfo = nodeConfig.pairId;
+      
+      // 重新添加被删除的节点和相关边
+      setTimeout(() => {
+        const nodeData = data;
+        // 恢复节点
+        this.lf.addNode({
+          id: nodeData.id,
+          type: nodeData.type,
+          x: nodeData.x,
+          y: nodeData.y,
+          text: nodeData.text,
+          properties: nodeData.properties,
+        });
+        
+        // 恢复默认分支的边（从分流网关到任务节点）
+        const defaultFlowIn = pairInfo.defaultBranch.flowInId;
+        const flowInEdge = this.lf.getEdgeModelById(defaultFlowIn);
+        if (!flowInEdge) {
+          // 边已被删除，需要恢复
+          this.lf.addEdge({
+            id: defaultFlowIn,
+            type: this.options.edgeType,
+            sourceNodeId: pairInfo.forkId,
+            targetNodeId: nodeData.id,
+            text: '默认',
+            properties: {
+              isDefault: true,
+              branchType: 'default',
+            },
+          });
+          console.log('[保护机制] 已恢复默认分支入口边:', defaultFlowIn);
+        }
+        
+        // 如果是包容网关，还需要恢复从任务节点到聚合网关的边
+        if (pairInfo.joinId && pairInfo.defaultBranch.flowOutId) {
+          const defaultFlowOut = pairInfo.defaultBranch.flowOutId;
+          const flowOutEdge = this.lf.getEdgeModelById(defaultFlowOut);
+          if (!flowOutEdge) {
+            // 边已被删除，需要恢复
+            this.lf.addEdge({
+              id: defaultFlowOut,
+              type: this.options.edgeType,
+              sourceNodeId: nodeData.id,
+              targetNodeId: pairInfo.joinId,
+              properties: {
+                branchType: 'default',
+                isDefault: true,
+              },
+            });
+            console.log('[保护机制] 已恢复默认分支出口边:', defaultFlowOut);
+          }
+        }
+      }, 0);
+      
+      return false;
+    }
+
     const pairInfo = this.gatewayPairs.get(data.id);
     if (!pairInfo) return;
 
@@ -582,6 +671,46 @@ export class GatewayPairManager {
   }
 
   /**
+   * 处理边添加（验证连线规则）
+   * 规则：
+   * 1. 两个节点之间只能有一条连线
+   * 2. 连线的起点和终点不能是同一个节点（禁止自连接）
+   */
+  private handleEdgeAdd({ data }: { data: any }) {
+    const { sourceNodeId, targetNodeId, id } = data;
+
+    // 规则2：禁止自连接
+    if (sourceNodeId === targetNodeId) {
+      console.warn('连线的起点和终点不能是同一个节点');
+      // 删除刚创建的边
+      setTimeout(() => {
+        this.lf.deleteEdge(id);
+      }, 0);
+      return false;
+    }
+
+    // 规则1：检查是否已存在相同的连线
+    const graphData = this.lf.getGraphRawData();
+    const existingEdge = graphData.edges.find(
+      (edge: any) =>
+        edge.id !== id && // 排除当前边
+        edge.sourceNodeId === sourceNodeId &&
+        edge.targetNodeId === targetNodeId
+    );
+
+    if (existingEdge) {
+      console.warn('两个节点之间只能有一条连线');
+      // 删除刚创建的边
+      setTimeout(() => {
+        this.lf.deleteEdge(id);
+      }, 0);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * 手动添加新分支（仅包容网关支持）
    */
   public addBranch(
@@ -719,6 +848,7 @@ export class GatewayPairManager {
     this.lf.off('node:dnd-add', this.boundHandleNodeDndAdd);
     this.lf.off('node:delete', this.boundHandleNodeDelete);
     this.lf.off('edge:delete', this.boundHandleEdgeDelete);
+    this.lf.off('edge:add', this.boundHandleEdgeAdd);
     this.gatewayPairs.clear();
     this.branchConfigs.clear();
   }
