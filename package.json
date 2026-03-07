@@ -6,13 +6,17 @@
   "scripts": {
     "build": "rsbuild build",
     "check": "biome check --write",
-    "dev": "rsbuild dev --open",
+    "dev": "rsbuild dev",
     "format": "biome format --write",
     "lint": "eslint .",
     "preview": "rsbuild preview"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@logicflow/core": "^2.1.11",
+    "@logicflow/extension": "^2.1.15",
+    "@logicflow/layout": "^2.0.11",
+    "@logicflow/vue-node-registry": "1.2.0-alpha.7",
     "axios": "^1.13.6",
     "dayjs": "^1.11.19",
     "element-plus": "^2.13.4",

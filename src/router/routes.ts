@@ -1,4 +1,5 @@
 import type { AppRouteRecordRaw } from '@/types'
+import { FlowDesign } from '@/views/flow/design/flow-design.tsx';
 
 /** 基础路由 */
 export const constantRoutes: AppRouteRecordRaw[] = [
@@ -45,6 +46,29 @@ export const asyncRoutes: AppRouteRecordRaw[] = [
       },
     ],
   },
+
+	{
+		path: '/flow',
+		name: 'FlowPage',
+		redirect: '/flow/design',
+		meta: {
+			title: '流程管理',
+			icon: 'Setting',
+			order: 100,
+		},
+		children: [
+			{
+				path: 'design',
+				name: 'FlowDesign',
+				meta: {
+					title: '流程设计',
+					icon: 'User',
+					auth: ['admin', 'user:view'],
+				},
+				component: FlowDesign,
+			},
+		],
+	},
   {
     path: '/system',
     name: 'System',

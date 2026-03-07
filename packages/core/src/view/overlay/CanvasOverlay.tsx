@@ -1,0 +1,290 @@
+import { Component } from 'preact/compat'
+import Dnd from '../behavior/dnd'
+import { observer } from '../..'
+import GraphModel from '../../model/GraphModel'
+import { EventType } from '../../constant'
+import { StepDrag, IDragParams } from '../../util'
+
+type IProps = {
+  graphModel: GraphModel
+  dnd: Dnd
+}
+type IState = {
+  isDragging: boolean
+}
+
+@observer
+export class CanvasOverlay extends Component<IProps, IState> {
+  stepDrag: StepDrag
+  stepScrollX = 0
+  stepScrollY = 0
+  pointers = new Map<number, { x: number; y: number }>()
+  pinchStartDistance?: number
+  pinchStartScale?: number
+  pinchLastCenterX?: number
+  pinchLastCenterY?: number
+  longPressTimer?: number
+
+  constructor(props: IProps) {
+    super()
+    const {
+      graphModel: { gridSize, eventCenter },
+    } = props
+    this.stepDrag = new StepDrag({
+      onDragging: this.onDragging,
+      onDragEnd: this.onDragEnd,
+      step: gridSize,
+      eventType: 'BLANK',
+      isStopPropagation: false,
+      eventCenter,
+      model: undefined,
+    })
+    // 当 ctrl、cmd 键被按住的时候，可以放大缩小。
+    this.state = {
+      isDragging: false,
+    }
+  }
+
+  // get InjectedProps() {
+  //   return this.props as InjectedProps;
+  // }
+  onDragging = ({ deltaX, deltaY }: IDragParams) => {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = undefined
+    }
+    this.setState({
+      isDragging: true,
+    })
+    const {
+      graphModel: { transformModel, editConfigModel },
+    } = this.props
+    if (editConfigModel.stopMoveGraph === true) {
+      return
+    }
+    transformModel.translate(deltaX, deltaY)
+  }
+  onDragEnd = () => {
+    this.setState({
+      isDragging: false,
+    })
+  }
+  zoomHandler = (ev: WheelEvent) => {
+    const {
+      graphModel: { editConfigModel, transformModel, gridSize },
+      graphModel,
+    } = this.props
+    const { deltaX: eX, deltaY: eY } = ev
+    const { stopScrollGraph, stopZoomGraph } = editConfigModel
+    // 如果没有禁止滚动移动画布, 并且当前触发的时候ctrl键、cmd键没有按住, 那么移动画布
+    if (!stopScrollGraph && !ev.ctrlKey && !ev.metaKey) {
+      ev.preventDefault()
+      this.stepScrollX += eX
+      this.stepScrollY += eY
+      if (Math.abs(this.stepScrollX) >= gridSize) {
+        const remainderX = this.stepScrollX % gridSize
+        const moveDistance = this.stepScrollX - remainderX
+        transformModel.translate(-moveDistance * transformModel.SCALE_X, 0)
+        this.stepScrollX = remainderX
+      }
+      if (Math.abs(this.stepScrollY) >= gridSize) {
+        const remainderY = this.stepScrollY % gridSize
+        const moveDistanceY = this.stepScrollY - remainderY
+        transformModel.translate(0, -moveDistanceY * transformModel.SCALE_Y)
+        this.stepScrollY = remainderY
+      }
+      return
+    }
+    // 如果没有禁止缩放画布，那么进行缩放. 在禁止缩放画布后，按住 ctrl、cmd 键也不能缩放了。
+    if (!stopZoomGraph) {
+      ev.preventDefault()
+      const position = graphModel.getPointByClient({
+        x: ev.clientX,
+        y: ev.clientY,
+      })
+      const { x, y } = position.canvasOverlayPosition
+      transformModel.zoom(ev.deltaY < 0, [x, y])
+    }
+  }
+  clickHandler = (ev: MouseEvent) => {
+    // 点击空白处取消节点选中状态, 不包括冒泡过来的事件。
+    const target = ev.target as HTMLElement
+    if (target.getAttribute('name') === 'canvas-overlay') {
+      const { graphModel } = this.props
+      const { selectElements } = graphModel
+      if (selectElements.size > 0) {
+        graphModel.clearSelectElements()
+      }
+      // 如果是拖拽状态，不触发点击事件
+      if (this.state.isDragging) return
+      graphModel.eventCenter.emit(EventType.BLANK_CLICK, { e: ev })
+    }
+  }
+  handleContextMenu = (ev: MouseEvent) => {
+    const target = ev.target as HTMLElement
+    if (target.getAttribute('name') === 'canvas-overlay') {
+      ev.preventDefault()
+      const { graphModel } = this.props
+      const position = graphModel.getPointByClient({
+        x: ev.clientX,
+        y: ev.clientY,
+      })
+      // graphModel.setElementState(ElementState.SHOW_MENU, position.domOverlayPosition);
+      graphModel.eventCenter.emit(EventType.BLANK_CONTEXTMENU, {
+        e: ev,
+        position,
+      })
+    }
+  }
+  // 鼠标、触摸板 按下
+  pointerDownHandler = (ev: PointerEvent) => {
+    const {
+      graphModel: {
+        eventCenter,
+        editConfigModel,
+        transformModel: { SCALE_X },
+        gridSize,
+      },
+    } = this.props
+    this.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+    }
+    if (ev.pointerType === 'touch') {
+      this.longPressTimer = window.setTimeout(() => {
+        this.handleContextMenu(ev)
+      }, 500)
+    }
+    // 检测双指触摸，初始化捏合缩放
+    if (this.pointers.size === 2) {
+      const {
+        graphModel: { transformModel, editConfigModel },
+      } = this.props
+      // 记录两指当前位置用于计算初始距离
+      const pts = Array.from(this.pointers.values())
+      const dx = pts[0].x - pts[1].x
+      const dy = pts[0].y - pts[1].y
+      const cx = (pts[0].x + pts[1].x) / 2
+      const cy = (pts[0].y + pts[1].y) / 2
+      // 记录捏合起始距离与当前缩放，后续按比例计算缩放
+      this.pinchStartDistance = Math.hypot(dx, dy)
+      this.pinchStartScale = transformModel.SCALE_X
+      // 双指操作下取消画布拖拽，避免与捏合缩放冲突
+      this.stepDrag.cancelDrag()
+      this.pinchLastCenterX = cx
+      this.pinchLastCenterY = cy
+      editConfigModel.updateEditConfig({ isPinching: true })
+      return
+    }
+    const { adjustEdge, adjustNodePosition, stopMoveGraph } = editConfigModel
+    const target = ev.target as HTMLElement
+    const isFrozenElement = !adjustEdge && !adjustNodePosition
+    if (target.getAttribute('name') === 'canvas-overlay' || isFrozenElement) {
+      if (stopMoveGraph !== true) {
+        this.stepDrag.setStep(gridSize * SCALE_X)
+        this.stepDrag.handleMouseDown(ev)
+      } else {
+        eventCenter.emit(EventType.BLANK_MOUSEDOWN, { e: ev })
+      }
+    }
+  }
+  pointerMoveHandler = (ev: PointerEvent) => {
+    // 记录当前指针位置（按 pointerId）
+    this.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+    // 当已记录初始捏合距离且存在两指时，执行捏合缩放
+    if (this.pinchStartDistance && this.pointers.size >= 2) {
+      const {
+        graphModel,
+        graphModel: { editConfigModel, transformModel },
+      } = this.props
+      if (editConfigModel.stopZoomGraph) return
+      // 取消触摸长按计时，避免捏合过程中误触发上下文菜单
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer)
+      }
+      // 计算两指间当前距离
+      const pts = Array.from(this.pointers.values())
+      const dx = pts[0].x - pts[1].x
+      const dy = pts[0].y - pts[1].y
+      const dist = Math.hypot(dx, dy)
+      // 以初始缩放为基准，根据距离比例得到新的缩放比例
+      const scale =
+        (this.pinchStartScale ?? transformModel.SCALE_X) *
+        (dist / this.pinchStartDistance)
+      // 取两指中心作为缩放原点，并转换为画布坐标系
+      const cx = (pts[0].x + pts[1].x) / 2
+      const cy = (pts[0].y + pts[1].y) / 2
+      const pos = graphModel.getPointByClient({ x: cx, y: cy })
+      const { x, y } = pos.canvasOverlayPosition
+      transformModel.zoom(scale, [x, y])
+      // 双指中心位移驱动画布平移，配合缩放实现捏合移动；
+      if (!editConfigModel.stopMoveGraph || editConfigModel.isPinching) {
+        const deltaX =
+          this.pinchLastCenterX === undefined ? 0 : cx - this.pinchLastCenterX
+        const deltaY =
+          this.pinchLastCenterY === undefined ? 0 : cy - this.pinchLastCenterY
+        transformModel.translate(deltaX, deltaY)
+        this.pinchLastCenterX = cx
+        this.pinchLastCenterY = cy
+      }
+      ev.preventDefault()
+    }
+  }
+  pointerUpHandler = (ev: PointerEvent) => {
+    this.pointers.delete(ev.pointerId)
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = undefined
+    }
+    // 双指松开或仅剩一指：结束捏合手势并清理临时状态
+    if (this.pointers.size < 2) {
+      // 清空捏合距离与缩放起始值
+      this.pinchStartDistance = undefined
+      this.pinchStartScale = undefined
+      // 清空上一帧的双指中心
+      this.pinchLastCenterX = undefined
+      this.pinchLastCenterY = undefined
+      const {
+        graphModel: { editConfigModel },
+      } = this.props
+      // 标记退出捏合，框选等交互可恢复
+      editConfigModel.updateEditConfig({ isPinching: false })
+      // 为了处理画布移动的时候，编辑和菜单仍然存在的问题。
+      this.clickHandler(ev)
+    }
+  }
+
+  render() {
+    const {
+      graphModel: { transformModel },
+    } = this.props
+    const { transform } = transformModel.getTransformStyle()
+    const { children } = this.props
+    const { isDragging } = this.state
+
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="100%"
+        height="100%"
+        name="canvas-overlay"
+        onWheel={this.zoomHandler}
+        onPointerDown={this.pointerDownHandler}
+        onPointerMove={this.pointerMoveHandler}
+        onPointerUp={this.pointerUpHandler}
+        onPointerCancel={this.pointerUpHandler}
+        onContextMenu={this.handleContextMenu}
+        style={{ touchAction: 'none', WebkitUserSelect: 'none' }}
+        className={
+          isDragging
+            ? 'lf-canvas-overlay lf-dragging'
+            : 'lf-canvas-overlay lf-drag-able'
+        }
+      >
+        <g transform={transform}>{children}</g>
+      </svg>
+    )
+  }
+}
+
+export default CanvasOverlay
