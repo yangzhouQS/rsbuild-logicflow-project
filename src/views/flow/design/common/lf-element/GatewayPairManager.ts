@@ -1,10 +1,10 @@
 /**
  * 网关分支管理器
  * 支持排他网关和包容网关的分支创建和管理
- * 
+ *
  * 功能：
  * - 排他网关：拖入画布时创建一个排他分支 + 一个默认分支（无聚合节点）
- * - 包容网关：拖入画布时创建两个普通分支 + 一个默认分支 + 聚合网关（成对出现）
+ * - 包容网关：拖入画布时创建一个普通分支 + 一个默认分支 + 聚合网关（成对出现）
  * - 默认分支禁止删除
  * - 删除网关时联动删除相关配置
  */
@@ -54,7 +54,7 @@ const DEFAULT_OPTIONS: Required<GatewayPairOptions> = {
   offsetX: 400,
   taskNodeType: 'rect',
   edgeType: 'polyline',
-  branchYOffset: 450,  // 每个分支之间的垂直间距（节点高度+文字标签+连线标签）
+  branchYOffset: 300,  // 每个分支之间的垂直间距
 };
 
 /**
@@ -197,7 +197,7 @@ export class GatewayPairManager {
         },
       });
 
-      // 5. 创建排他网关到默认分支的连线（默认路径）
+      // 5. 创建排他网关到默认分支的连线
       const defaultFlowId = `Flow_Default_${timestamp}`;
       this.lf.addEdge({
         id: defaultFlowId,
@@ -248,8 +248,7 @@ export class GatewayPairManager {
 
   /**
    * 创建包容网关成对结构（分流 + 聚合）
-   * 结构：[分流网关] ──条件A──> [普通分支1] ──> [聚合网关]
-   *          │──条件B──> [普通分支2] ──>    ↑
+   * 结构：[分流网关] ──条件A──> [普通分支] ──> [聚合网关]
    *          └──默认───> [默认分支] ────>   ↑
    */
   public createInclusiveGatewayPair(forkGateway: {
@@ -310,14 +309,14 @@ export class GatewayPairManager {
         },
       });
 
-      // 3. 创建普通分支1任务节点（上方）
-      const normalTask1Id = `Task_Normal1_${timestamp}`;
+      // 3. 创建普通分支任务节点（上方）
+      const normalTaskId = `Task_Normal_${timestamp}`;
       this.lf.addNode({
-        id: normalTask1Id,
+        id: normalTaskId,
         type: taskNodeType,
         x: forkGateway.x + offsetX / 2,
         y: forkGateway.y - branchYOffset,
-        text: '普通分支1',
+        text: '普通分支',
         properties: {
           branchType: 'normal',
           forkGatewayId: forkId,
@@ -325,28 +324,13 @@ export class GatewayPairManager {
         },
       });
 
-      // 4. 创建普通分支2任务节点（中间偏下，与网关错开）
-      const normalTask2Id = `Task_Normal2_${timestamp}`;
-      this.lf.addNode({
-        id: normalTask2Id,
-        type: taskNodeType,
-        x: forkGateway.x + offsetX / 2,
-        y: forkGateway.y + branchYOffset,
-        text: '普通分支2',
-        properties: {
-          branchType: 'normal',
-          forkGatewayId: forkId,
-          joinGatewayId: joinId,
-        },
-      });
-
-      // 5. 创建默认分支任务节点（最下方）
+      // 4. 创建默认分支任务节点（下方）
       const defaultTaskId = `Task_Default_${timestamp}`;
       this.lf.addNode({
         id: defaultTaskId,
         type: taskNodeType,
         x: forkGateway.x + offsetX / 2,
-        y: forkGateway.y + branchYOffset * 3,  // 使用3倍偏移，确保与普通分支2有足够间距
+        y: forkGateway.y + branchYOffset,
         text: '默认分支',
         properties: {
           branchType: 'default',
@@ -356,13 +340,13 @@ export class GatewayPairManager {
         },
       });
 
-      // 6. 创建分流网关到普通分支1的连线
-      const normal1FlowId = `Flow_Normal1_${timestamp}`;
+      // 5. 创建分流网关到普通分支的连线
+      const normalFlowId = `Flow_Normal_${timestamp}`;
       this.lf.addEdge({
-        id: normal1FlowId,
+        id: normalFlowId,
         type: edgeType,
         sourceNodeId: forkId,
-        targetNodeId: normalTask1Id,
+        targetNodeId: normalTaskId,
         text: '条件A',
         properties: {
           condition: '${conditionA === true}',
@@ -371,22 +355,7 @@ export class GatewayPairManager {
         },
       });
 
-      // 7. 创建分流网关到普通分支2的连线
-      const normal2FlowId = `Flow_Normal2_${timestamp}`;
-      this.lf.addEdge({
-        id: normal2FlowId,
-        type: edgeType,
-        sourceNodeId: forkId,
-        targetNodeId: normalTask2Id,
-        text: '条件B',
-        properties: {
-          condition: '${conditionB === true}',
-          branchType: 'normal',
-          isDefault: false,
-        },
-      });
-
-      // 8. 创建分流网关到默认分支的连线（默认路径）
+      // 6. 创建分流网关到默认分支的连线
       const defaultFlowId = `Flow_Default_${timestamp}`;
       this.lf.addEdge({
         id: defaultFlowId,
@@ -400,31 +369,19 @@ export class GatewayPairManager {
         },
       });
 
-      // 9. 创建普通分支1到聚合网关的连线
-      const normal1ToJoinFlowId = `Flow_Normal1ToJoin_${timestamp}`;
+      // 7. 创建普通分支到聚合网关的连线
+      const normalToJoinFlowId = `Flow_NormalToJoin_${timestamp}`;
       this.lf.addEdge({
-        id: normal1ToJoinFlowId,
+        id: normalToJoinFlowId,
         type: edgeType,
-        sourceNodeId: normalTask1Id,
+        sourceNodeId: normalTaskId,
         targetNodeId: joinId,
         properties: {
           branchType: 'normal',
         },
       });
 
-      // 10. 创建普通分支2到聚合网关的连线
-      const normal2ToJoinFlowId = `Flow_Normal2ToJoin_${timestamp}`;
-      this.lf.addEdge({
-        id: normal2ToJoinFlowId,
-        type: edgeType,
-        sourceNodeId: normalTask2Id,
-        targetNodeId: joinId,
-        properties: {
-          branchType: 'normal',
-        },
-      });
-
-      // 11. 创建默认分支到聚合网关的连线
+      // 8. 创建默认分支到聚合网关的连线
       const defaultToJoinFlowId = `Flow_DefaultToJoin_${timestamp}`;
       this.lf.addEdge({
         id: defaultToJoinFlowId,
@@ -437,21 +394,16 @@ export class GatewayPairManager {
         },
       });
 
-      // 12. 记录配对信息
+      // 9. 记录配对信息
       const pairInfo: PairInfo = {
         gatewayType: 'inclusiveGateway',
         forkId,
         joinId,
         branches: [
           {
-            taskId: normalTask1Id,
-            flowInId: normal1FlowId,
-            flowOutId: normal1ToJoinFlowId,
-          },
-          {
-            taskId: normalTask2Id,
-            flowInId: normal2FlowId,
-            flowOutId: normal2ToJoinFlowId,
+            taskId: normalTaskId,
+            flowInId: normalFlowId,
+            flowOutId: normalToJoinFlowId,
           },
         ],
         defaultBranch: {
@@ -465,7 +417,7 @@ export class GatewayPairManager {
       this.gatewayPairs.set(forkId, pairInfo);
       this.gatewayPairs.set(joinId, pairInfo);
 
-      // 13. 记录分支配置（默认分支禁止删除）
+      // 10. 记录分支配置（默认分支禁止删除）
       this.branchConfigs.set(defaultFlowId, {
         isDefault: true,
         isDeletable: false,
