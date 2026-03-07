@@ -7,6 +7,7 @@ import { ExclusiveGatewayNode } from './ExclusiveGatewayNode';
 import { ExclusiveGatewayModel } from './ExclusiveGatewayModel';
 import { InclusiveGatewayNode } from './InclusiveGatewayNode';
 import { InclusiveGatewayModel } from './InclusiveGatewayModel';
+import { GatewayPairManager } from './GatewayPairManager';
 import type {
   IGatewayProperties,
   IGatewayConfig,
@@ -15,6 +16,13 @@ import type {
   IInclusiveGatewayProperties,
   IInclusiveGatewayConfig,
 } from './types';
+import type {
+  GatewayType,
+  BranchInfo,
+  PairInfo,
+  BranchConfig,
+  GatewayPairOptions,
+} from './GatewayPairManager';
 
 // 导出类型
 export type {
@@ -24,6 +32,11 @@ export type {
   IExclusiveGatewayConfig,
   IInclusiveGatewayProperties,
   IInclusiveGatewayConfig,
+  GatewayType,
+  BranchInfo,
+  PairInfo,
+  BranchConfig,
+  GatewayPairOptions,
 };
 
 // 导出组件
@@ -32,6 +45,7 @@ export {
   ExclusiveGatewayModel,
   InclusiveGatewayNode,
   InclusiveGatewayModel,
+  GatewayPairManager,
 };
 
 // 节点类型标识

@@ -3,7 +3,8 @@ import { logicFlowConfig, logicFlowCustomTheme } from '@/views/flow/design/confi
 import { FlowDndPanel } from '@/views/flow/design/flow-dnd-panel.tsx';
 import { registerFlowModel } from '@/views/flow/design/register-flow-model.ts';
 import { setDndPanel } from '@/views/flow/design/set-dnd-panel.ts';
-import { defineComponent, reactive, onMounted, ref } from 'vue';
+import { registerGatewayBranch, getGatewayBranchManager } from '@/views/flow/design/register-gateway-branch';
+import { defineComponent, reactive, onMounted, onUnmounted, ref } from 'vue';
 import LogicFlow, { GraphModel, BaseNodeModel, ElementState, LogicFlowUtil } from '@logicflow/core';
 import { register, getTeleport } from '@logicflow/vue-node-registry';
 import '@logicflow/core/lib/style/index.css';
@@ -30,6 +31,24 @@ export const FlowDesign = defineComponent({
 				// console.log(lfRef.value?.getGraphData());
 				console.log(lfRef.value?.getGraphRawData());
 			},
+			// 获取所有网关配对信息
+			getGatewayPairInfos: () => {
+				const manager = getGatewayBranchManager();
+				if (manager) {
+					const pairs = manager.getAllPairInfos();
+					console.log('网关配对信息:', pairs);
+					return pairs;
+				}
+				return [];
+			},
+			// 手动创建成对网关
+			createGatewayPair: (x: number, y: number, type: 'exclusiveGateway' | 'inclusiveGateway' = 'exclusiveGateway') => {
+				const manager = getGatewayBranchManager();
+				if (manager) {
+					return manager.createGatewayPair(x, y, type);
+				}
+				return null;
+			},
 			init: () => {
 				if (state.initialized) {
 					return;
@@ -48,12 +67,20 @@ export const FlowDesign = defineComponent({
 				// 设置自定义主题
 				lf.setTheme(logicFlowCustomTheme);
 
-				registerFlowModel(lf as LogicFlow);
+				// 注册自定义节点模型
+				registerFlowModel(lf);
 				lf.register(UserTask);
 
 				// 设置dnd 面板
 				// setDndPanel(lf);
 
+				// 注册网关分支功能
+				// 当拖拽网关节点到画布时，自动创建成对的网关和默认分支
+				registerGatewayBranch(lf, {
+					debug: true, // 开启调试模式，输出日志
+					offsetX: 300, // 分流和聚合网关之间的水平距离
+					branchYOffset: 80, // 分支之间的垂直间距
+				});
 
 				lf.render({
 					nodes: [
@@ -72,10 +99,21 @@ export const FlowDesign = defineComponent({
 
 				lfRef.value = lf;
 			},
+			destroy: () => {
+				// 销毁网关分支管理器
+				const manager = getGatewayBranchManager();
+				if (manager) {
+					manager.destroy();
+				}
+			},
 		};
 
 		onMounted(() => {
 			methods.init();
+		});
+
+		onUnmounted(() => {
+			methods.destroy();
 		});
 
 		return () => {
