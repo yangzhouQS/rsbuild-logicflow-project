@@ -111,15 +111,15 @@ export class ExclusiveGatewayModel<
    * 菱形网关锚点：左侧（入口）、右侧（出口）、顶部、底部
    */
   getDefaultAnchor() {
-    const { x, y, width, height } = this;
+    const { x, y, width, height, id } = this;
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
     return [
-      { x: x - halfWidth, y: y },      // 左侧锚点
-      { x: x + halfWidth, y: y },      // 右侧锚点
-      { x: x, y: y - halfHeight },     // 顶部锚点
-      { x: x, y: y + halfHeight },     // 底部锚点
+      { x: x - halfWidth, y: y, id: `${id}_0` },      // 左侧锚点
+      { x: x + halfWidth, y: y, id: `${id}_1` },      // 右侧锚点
+      { x: x, y: y - halfHeight, id: `${id}_2` },     // 顶部锚点
+      { x: x, y: y + halfHeight, id: `${id}_3` },     // 底部锚点
     ];
   }
 
