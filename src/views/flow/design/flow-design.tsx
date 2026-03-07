@@ -1,6 +1,7 @@
 import UserTask from '@/views/flow/design/common/user-task.ts';
-import { logicFlowConfig, logicFlowCustomTheme } from '@/views/flow/design/config.ts';
+import { logicFlowConfig, logicFlowCustomTheme } from '@/views/flow/design/config/config.ts';
 import { FlowDndPanel } from '@/views/flow/design/flow-dnd-panel.tsx';
+import { registerFlowModel } from '@/views/flow/design/register-flow-model.ts';
 import { setDndPanel } from '@/views/flow/design/set-dnd-panel.ts';
 import { defineComponent, reactive, onMounted, ref } from 'vue';
 import LogicFlow, { GraphModel, BaseNodeModel, ElementState, LogicFlowUtil } from '@logicflow/core';
@@ -25,6 +26,10 @@ export const FlowDesign = defineComponent({
 		});
 
 		const methods = {
+			getFlowData: () => {
+				// console.log(lfRef.value?.getGraphData());
+				console.log(lfRef.value?.getGraphRawData());
+			},
 			init: () => {
 				if (state.initialized) {
 					return;
@@ -43,15 +48,14 @@ export const FlowDesign = defineComponent({
 				// 设置自定义主题
 				lf.setTheme(logicFlowCustomTheme);
 
+				registerFlowModel(lf as LogicFlow);
 				lf.register(UserTask);
 
 				// 设置dnd 面板
-				setDndPanel(lf);
+				// setDndPanel(lf);
 
 
-				lf.render({});
-
-				/* lf.render({
+				lf.render({
 					nodes: [
 						{
 							type: "UserTask",
@@ -62,7 +66,7 @@ export const FlowDesign = defineComponent({
 							}
 						}
 					]
-				}); */
+				});
 
 				state.initialized = true;
 
@@ -77,10 +81,15 @@ export const FlowDesign = defineComponent({
 		return () => {
 			return (
 				<div class="flow-design page-container">
-					{/* 左侧拖拽面板 */}
-					<FlowDndPanel/>
+					<el-card class={'flow-design-action'}>
+						<el-button onClick={methods.getFlowData}>获取数据</el-button>
+					</el-card>
+					<div class={'flow-container'}>
+						{/* 左侧拖拽面板 */}
+						<FlowDndPanel lf={lfRef.value}/>
 
-					<div ref={ containerRef } id="graph" class="viewport"></div>
+						<div ref={ containerRef } id="graph" class="viewport"></div>
+					</div>
 				</div>
 			);
 		};
