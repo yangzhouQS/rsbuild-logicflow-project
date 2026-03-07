@@ -4,11 +4,11 @@
  */
 import type LogicFlow from '@logicflow/core';
 import type { GraphModel } from '@logicflow/core';
-import { ExclusiveGatewayNode } from './ExclusiveGatewayNode';
-import { ExclusiveGatewayModel } from './ExclusiveGatewayModel';
-import { InclusiveGatewayNode } from './InclusiveGatewayNode';
-import { InclusiveGatewayModel } from './InclusiveGatewayModel';
-import { GatewayPairManager } from './GatewayPairManager';
+import { ExclusiveGatewayNode } from './exclusive-gateway-node';
+import { ExclusiveGatewayModel } from './exclusive-gateway-model';
+import { InclusiveGatewayNode } from './inclusive-gateway-node';
+import { InclusiveGatewayModel } from './inclusive-gateway-model';
+import { GatewayPairManager } from './gateway-pair-manager';
 import type {
   IGatewayProperties,
   IGatewayConfig,
@@ -23,7 +23,7 @@ import type {
   PairInfo,
   BranchConfig,
   GatewayPairOptions,
-} from './GatewayPairManager';
+} from './gateway-pair-manager';
 
 // 导出类型
 export type {

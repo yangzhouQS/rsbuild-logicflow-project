@@ -140,12 +140,12 @@ register-gateway-branch/
 └── README.md         # 本文档
 
 common/lf-element/
-├── GatewayPairManager.ts    # 网关分支管理器核心实现
-├── ExclusiveGatewayNode.tsx # 排他网关节点视图
-├── ExclusiveGatewayModel.ts # 排他网关节点模型
-├── InclusiveGatewayNode.tsx # 包容网关节点视图
-├── InclusiveGatewayModel.ts # 包容网关节点模型
-└── index.ts                 # 导出所有组件
+├── gateway-pair-manager.ts        # 网关分支管理器核心实现
+├── exclusive-gateway-node.tsx     # 排他网关节点视图
+├── exclusive-gateway-model.ts     # 排他网关节点模型
+├── inclusive-gateway-node.tsx     # 包容网关节点视图
+├── inclusive-gateway-model.ts     # 包容网关节点模型
+└── index.ts                       # 导出所有组件
 ```
 
 ## 注意事项

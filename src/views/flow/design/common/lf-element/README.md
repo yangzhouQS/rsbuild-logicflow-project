@@ -6,13 +6,14 @@
 
 ```
 lf-element/
-├── types.ts                    # 类型定义
-├── ExclusiveGatewayModel.ts    # 排他网关模型
-├── ExclusiveGatewayNode.tsx    # 排他网关视图
-├── InclusiveGatewayModel.ts    # 包容网关模型
-├── InclusiveGatewayNode.tsx    # 包容网关视图
-├── index.ts                    # 模块导出和注册函数
-└── README.md                   # 本文档
+├── types.ts                        # 类型定义
+├── exclusive-gateway-model.ts      # 排他网关模型
+├── exclusive-gateway-node.tsx      # 排他网关视图
+├── inclusive-gateway-model.ts      # 包容网关模型
+├── inclusive-gateway-node.tsx      # 包容网关视图
+├── gateway-pair-manager.ts         # 网关分支管理器
+├── index.ts                        # 模块导出和注册函数
+└── README.md                       # 本文档
 ```
 
 ## 快速开始
