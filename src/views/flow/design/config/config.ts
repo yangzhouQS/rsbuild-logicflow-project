@@ -161,6 +161,7 @@ export const flowApproveNodes = [
 		},
 		properties: {
 			// 节点业务属性
+			refY: 66,
 		},
 	},
 	/* {

@@ -14,6 +14,9 @@ const DEFAULT_CONFIG = {
   defaultHeight: 50,
   defaultColor: '#E6A23C',
   defaultIconScale: 0.6,
+  // 默认文字不偏移（居中显示）
+  defaultRefX: 0,
+  defaultRefY: 0,
 };
 
 export class ExclusiveGatewayModel<
@@ -67,6 +70,26 @@ export class ExclusiveGatewayModel<
   }
 
   /**
+   * 获取文本样式
+   * 使用 transform 属性实现文字偏移
+   */
+  getTextStyle() {
+    const style = super.getTextStyle();
+    const { textStyle: customTextStyle = {}, refX, refY } = this.properties;
+
+    // 获取文字偏移配置，默认为0（居中）
+    const textRefX = refX ?? DEFAULT_CONFIG.defaultRefX;
+    const textRefY = refY ?? DEFAULT_CONFIG.defaultRefY;
+
+    return {
+      ...style,
+      // 使用 transform 实现文字偏移
+      transform: `matrix(1, 0, 0, 1, ${textRefX}, ${textRefY})`,
+      ...cloneDeep(customTextStyle),
+    };
+  }
+
+  /**
    * 获取菱形的四个顶点
    * 用于渲染菱形外观
    */
@@ -108,6 +131,20 @@ export class ExclusiveGatewayModel<
    */
   getIconScale() {
     return this.properties.iconScale || DEFAULT_CONFIG.defaultIconScale;
+  }
+
+  /**
+   * 获取文字X轴偏移
+   */
+  getTextRefX() {
+    return this.properties.refX ?? DEFAULT_CONFIG.defaultRefX;
+  }
+
+  /**
+   * 获取文字Y轴偏移
+   */
+  getTextRefY() {
+    return this.properties.refY ?? DEFAULT_CONFIG.defaultRefY;
   }
 }
 

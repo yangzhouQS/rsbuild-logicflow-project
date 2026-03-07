@@ -7,12 +7,26 @@ export function registerFlowModel(lf: LogicFlowType) {
     defaultWidth: 100,
     defaultHeight: 100,
     defaultColor: '#E6A23C',
+	  properties: {
+		  refY: 70,
+	  },
   });
 
   // 注册包容网关节点
   registerInclusiveGateway(lf, {
-    defaultWidth: 150,
-    defaultHeight: 150,
+    defaultWidth: 100,
+    defaultHeight: 100,
     defaultColor: '#E6A23C',
+	  properties: {
+      refY: 70,
+		  style: {
+			  fill: '#ffe6cc',
+			  stroke: '#d79b00',
+		  },
+		  textStyle: {
+			  textAnchor: 'middle',
+			  dominantBaseline: 'middle',
+		  },
+    },
   });
 }

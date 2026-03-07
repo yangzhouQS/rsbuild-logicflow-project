@@ -15,10 +15,14 @@ export interface IGatewayProperties {
   color?: string;
   /** 图标大小比例 (0-1) */
   iconScale?: number;
+  /** 文字X轴偏移量（相对于节点中心） */
+  refX?: number;
+  /** 文字Y轴偏移量（相对于节点中心） */
+  refY?: number;
   /** 自定义样式 */
   style?: LogicFlow.CommonTheme;
   /** 文本样式 */
-  textStyle?: LogicFlow.CommonTheme;
+  textStyle?: LogicFlow.TextNodeTheme;
   /** 其他属性 */
   [key: string]: unknown;
 }
@@ -47,6 +51,12 @@ export interface IGatewayConfig {
   defaultColor?: string;
   /** 默认图标比例 */
   defaultIconScale?: number;
+  /** 默认文字X轴偏移 */
+  defaultRefX?: number;
+  /** 默认文字Y轴偏移 */
+  defaultRefY?: number;
+  /** 默认属性（会覆盖上面的单独配置） */
+  properties?: Partial<IGatewayProperties>;
 }
 
 /**

@@ -27,39 +27,53 @@ const lf = new LogicFlow({
   container: document.getElementById('container'),
 });
 
-// 注册排他网关
+// 方式一：使用单独的配置项
 registerExclusiveGateway(lf, {
   defaultColor: '#E6A23C',
   defaultWidth: 50,
   defaultHeight: 50,
+  defaultRefY: 40,  // 默认文字向下偏移40像素
 });
 
-// 注册包容网关
+// 方式二：使用 properties 对象统一配置（推荐）
 registerInclusiveGateway(lf, {
-  defaultColor: '#E6A23C',
+  properties: {
+    width: 60,
+    height: 60,
+    color: '#67C23A',
+    refY: 45,
+    textStyle: {
+      fontSize: 14,
+      color: '#333333',
+    },
+  },
 });
 ```
 
 ### 2. 使用网关节点
 
 ```typescript
-// 添加排他网关节点
+// 添加排他网关节点（文字居中显示）
 lf.addNode({
   type: 'exclusiveGateway',
   x: 200,
   y: 200,
   properties: {
-    color: '#FF0000',  // 自定义颜色
-    width: 60,         // 自定义宽度
-    height: 60,        // 自定义高度
+    color: '#FF0000',
+    width: 60,
+    height: 60,
   },
 });
 
-// 添加包容网关节点
+// 添加包容网关节点（文字偏移到节点下方）
 lf.addNode({
   type: 'inclusiveGateway',
   x: 400,
   y: 200,
+  text: '包容网关',
+  properties: {
+    refY: 40,
+  },
 });
 ```
 
@@ -69,84 +83,137 @@ lf.addNode({
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `width` | `number` | `50` | 节点宽度 |
-| `height` | `number` | `50` | 节点高度 |
-| `color` | `string` | `#E6A23C` | 节点颜色 |
-| `iconScale` | `number` | `0.6` | 图标缩放比例 |
-| `style` | `object` | - | 自定义样式 |
+| width | number | 50 | 节点宽度 |
+| height | number | 50 | 节点高度 |
+| color | string | #E6A23C | 节点颜色 |
+| iconScale | number | 0.6 | 图标缩放比例 |
+| refX | number | 0 | 文字X轴偏移量 |
+| refY | number | 0 | 文字Y轴偏移量 |
+| style | CommonTheme | - | 自定义节点样式 |
+| textStyle | TextNodeTheme | - | 自定义文本样式 |
 
 ### IGatewayConfig 接口
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `type` | `string` | - | 节点类型标识 |
-| `defaultWidth` | `number` | `50` | 默认宽度 |
-| `defaultHeight` | `number` | `50` | 默认高度 |
-| `defaultColor` | `string` | `#E6A23C` | 默认颜色 |
-| `defaultIconScale` | `number` | `0.6` | 默认图标缩放比例 |
+| type | string | - | 节点类型标识 |
+| defaultWidth | number | 50 | 默认宽度 |
+| defaultHeight | number | 50 | 默认高度 |
+| defaultColor | string | #E6A23C | 默认颜色 |
+| defaultIconScale | number | 0.6 | 默认图标缩放比例 |
+| defaultRefX | number | 0 | 默认文字X轴偏移 |
+| defaultRefY | number | 0 | 默认文字Y轴偏移 |
+| properties | Partial\<IGatewayProperties\> | - | 默认属性（优先级高） |
+
+### 配置优先级
+
+properties 中的值优先于单独配置项：
+
+```typescript
+registerExclusiveGateway(lf, {
+  defaultWidth: 50,       // 会被覆盖
+  properties: {
+    width: 80,            // 最终使用 80
+  },
+});
+```
+
+## 文字位置配置
+
+### 文字居中（默认）
+
+```typescript
+lf.addNode({
+  type: 'exclusiveGateway',
+  x: 200, y: 200,
+  text: '排他网关',
+});
+```
+
+### 文字偏移到节点下方
+
+```typescript
+lf.addNode({
+  type: 'exclusiveGateway',
+  x: 200, y: 200,
+  text: '排他网关',
+  properties: { refY: 40 },
+});
+```
+
+### 文字偏移到节点上方
+
+```typescript
+lf.addNode({
+  type: 'exclusiveGateway',
+  x: 200, y: 200,
+  text: '排他网关',
+  properties: { refY: -40 },
+});
+```
+
+### 自定义文字样式
+
+```typescript
+lf.addNode({
+  type: 'exclusiveGateway',
+  x: 200, y: 200,
+  text: '排他网关',
+  properties: {
+    refY: 40,
+    textStyle: {
+      fontSize: 14,
+      color: '#333333',
+      fontWeight: 'bold',
+    },
+  },
+});
+```
 
 ## 节点外观
 
 ### 排他网关（Exclusive Gateway）
-- **形状**：菱形
-- **图标**：内部 X 形状
-- **用途**：条件分支，只选择一条路径执行
+- 形状：菱形
+- 图标：内部 X 形状
+- 用途：条件分支，只选择一条路径执行
 
 ### 包容网关（Inclusive Gateway）
-- **形状**：菱形
-- **图标**：内部圆形
-- **用途**：条件分支，可选择多条路径执行
+- 形状：菱形
+- 图标：内部圆形
+- 用途：条件分支，可选择多条路径执行
 
-## 技术实现
+## API
 
-### Model 层
-- 继承 `RectNodeModel`
-- 提供菱形锚点配置（四个顶点）
-- 支持自定义样式和属性
+### registerExclusiveGateway(lf, config?)
 
-### View 层
-- 继承 `RectNode`
-- 使用 `h` 函数从 `@logicflow/core` 进行 SVG 渲染
-- 支持动态缩放和颜色配置
-- 图标居中渲染
+注册排他网关节点。
 
-## 示例：拖拽面板配置
+### registerInclusiveGateway(lf, config?)
 
-```typescript
-import { createExclusiveGatewayNode, createInclusiveGatewayNode } from './lf-element';
+注册包容网关节点。
 
-// 在拖拽面板中使用
-const panelItems = [
-  {
-    type: 'exclusiveGateway',
-    text: '排他网关',
-    icon: 'data:image/svg+xml,...', // 自定义图标
-    className: 'gateway-exclusive',
-    properties: createExclusiveGatewayNode(0, 0),
-  },
-  {
-    type: 'inclusiveGateway',
-    text: '包容网关',
-    icon: 'data:image/svg+xml,...',
-    className: 'gateway-inclusive',
-    properties: createInclusiveGatewayNode(0, 0),
-  },
-];
-```
+### registerAllGateways(lf, config?)
 
-## 注意事项
+注册所有网关节点。
 
-1. **图标居中**：内部图标（X 或圆形）会自动居中于节点中心
-2. **缩放支持**：节点放大时，图标会按比例缩放并保持居中
-3. **颜色自定义**：通过 `properties.color` 或注册配置自定义颜色
-4. **锚点位置**：锚点位于菱形的四个顶点，便于连线
+### createExclusiveGatewayNode(x, y, properties?)
+
+创建排他网关节点配置。
+
+### createInclusiveGatewayNode(x, y, properties?)
+
+创建包容网关节点配置。
 
 ## 更新日志
+
+### v1.2.0
+- 新增 refX/refY 属性支持文字偏移
+- 新增 textStyle 属性支持自定义文字样式
+- IGatewayConfig 新增 properties 参数
 
 ### v1.1.0
 - 修复图标居中问题
 - 优化 SVG 渲染逻辑
-- 移除未使用的变量
 
 ### v1.0.0
 - 初始实现

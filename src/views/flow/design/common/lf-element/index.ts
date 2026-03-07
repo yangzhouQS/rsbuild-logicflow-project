@@ -47,28 +47,53 @@ export const DEFAULT_GATEWAY_CONFIG: IGatewayConfig = {
   defaultHeight: 50,
   defaultColor: '#E6A23C',
   defaultIconScale: 0.6,
+  defaultRefX: 0,
+  defaultRefY: 0,
 };
+
+/**
+ * 从配置中提取默认属性
+ * @param config 网关配置
+ */
+function extractDefaultProperties(config: IGatewayConfig): IGatewayProperties {
+  // 如果配置中有 properties，优先使用 properties 中的值
+  const { properties = {} } = config;
+
+  return {
+    width: properties.width ?? config.defaultWidth,
+    height: properties.height ?? config.defaultHeight,
+    color: properties.color ?? config.defaultColor,
+    iconScale: properties.iconScale ?? config.defaultIconScale,
+    refX: properties.refX ?? config.defaultRefX,
+    refY: properties.refY ?? config.defaultRefY,
+    style: properties.style,
+    textStyle: properties.textStyle,
+  };
+}
 
 /**
  * 注册排他网关节点到LogicFlow实例
  * @param lf LogicFlow实例
- * @param config 可选的自定义配置
+ * @param config 可选的自定义配置，支持 properties 参数
  */
 export function registerExclusiveGateway(
   lf: LogicFlow,
   config?: Partial<IGatewayConfig>,
 ) {
-  const finalConfig = { ...DEFAULT_GATEWAY_CONFIG, ...config, type: EXCLUSIVE_GATEWAY_TYPE };
+  const finalConfig: IGatewayConfig = {
+    ...DEFAULT_GATEWAY_CONFIG,
+    ...config,
+    type: EXCLUSIVE_GATEWAY_TYPE,
+  };
+
+  const defaultProperties = extractDefaultProperties(finalConfig);
 
   // 动态创建模型类以支持自定义配置
   class CustomExclusiveGatewayModel extends ExclusiveGatewayModel {
     constructor(data: LogicFlow.NodeConfig<IGatewayProperties>, graphModel: GraphModel) {
       // 注入默认属性
       data.properties = {
-        width: finalConfig.defaultWidth,
-        height: finalConfig.defaultHeight,
-        color: finalConfig.defaultColor,
-        iconScale: finalConfig.defaultIconScale,
+        ...defaultProperties,
         ...data.properties,
       };
       super(data, graphModel);
@@ -85,23 +110,26 @@ export function registerExclusiveGateway(
 /**
  * 注册包容网关节点到LogicFlow实例
  * @param lf LogicFlow实例
- * @param config 可选的自定义配置
+ * @param config 可选的自定义配置，支持 properties 参数
  */
 export function registerInclusiveGateway(
   lf: LogicFlow,
   config?: Partial<IGatewayConfig>,
 ) {
-  const finalConfig = { ...DEFAULT_GATEWAY_CONFIG, ...config, type: INCLUSIVE_GATEWAY_TYPE };
+  const finalConfig: IGatewayConfig = {
+    ...DEFAULT_GATEWAY_CONFIG,
+    ...config,
+    type: INCLUSIVE_GATEWAY_TYPE,
+  };
+
+  const defaultProperties = extractDefaultProperties(finalConfig);
 
   // 动态创建模型类以支持自定义配置
   class CustomInclusiveGatewayModel extends InclusiveGatewayModel {
     constructor(data: LogicFlow.NodeConfig<IGatewayProperties>, graphModel: GraphModel) {
       // 注入默认属性
       data.properties = {
-        width: finalConfig.defaultWidth,
-        height: finalConfig.defaultHeight,
-        color: finalConfig.defaultColor,
-        iconScale: finalConfig.defaultIconScale,
+        ...defaultProperties,
         ...data.properties,
       };
       super(data, graphModel);
@@ -136,6 +164,8 @@ export function createExclusiveGatewayNode(
       height: DEFAULT_GATEWAY_CONFIG.defaultHeight,
       color: DEFAULT_GATEWAY_CONFIG.defaultColor,
       iconScale: DEFAULT_GATEWAY_CONFIG.defaultIconScale,
+      refX: DEFAULT_GATEWAY_CONFIG.defaultRefX,
+      refY: DEFAULT_GATEWAY_CONFIG.defaultRefY,
       ...properties,
     },
   };
@@ -162,6 +192,8 @@ export function createInclusiveGatewayNode(
       height: DEFAULT_GATEWAY_CONFIG.defaultHeight,
       color: DEFAULT_GATEWAY_CONFIG.defaultColor,
       iconScale: DEFAULT_GATEWAY_CONFIG.defaultIconScale,
+      refX: DEFAULT_GATEWAY_CONFIG.defaultRefX,
+      refY: DEFAULT_GATEWAY_CONFIG.defaultRefY,
       ...properties,
     },
   };
@@ -170,7 +202,7 @@ export function createInclusiveGatewayNode(
 /**
  * 注册所有网关节点
  * @param lf LogicFlow实例
- * @param config 可选的自定义配置
+ * @param config 可选的自定义配置，支持 properties 参数
  */
 export function registerAllGateways(
   lf: LogicFlow,
