@@ -321,10 +321,8 @@ export class GatewayPairManager {
           gatewayType: 'inclusive',
           gatewayRole: 'split',
         });
-        const forkNode = this.lf.getNodeModelById(forkId);
-        if (forkNode && !forkNode.text?.value) {
-          forkNode.setText(gatewayName);
-        }
+        // 同步更新分流网关的文本为统一的网关名称
+        this.lf.updateText(forkId, gatewayName);
       }
 
       // 2. 创建聚合网关（包容网关类型）- 使用相同的名称
