@@ -8,6 +8,7 @@
  * - 默认分支连线及其后的第一个节点禁止删除
  * - 删除网关时联动删除相关配置
  * - 连线规则：两点之间只能有一条连线，不能自连接
+ * - 点击包容网关分流节点时，开启到聚合网关连线的动画
  */
 import type LogicFlow from '@logicflow/core';
 
@@ -28,6 +29,7 @@ export interface PairInfo {
   joinId?: string;  // 聚合网关ID（仅包容网关有）
   branches: BranchInfo[];  // 所有分支
   defaultBranch: BranchInfo;  // 默认分支
+  gatewayName?: string;  // 网关名称（分流和聚合节点共享）
   createdAt: string;
 }
 
@@ -67,12 +69,17 @@ export class GatewayPairManager {
   private gatewayPairs: Map<string, PairInfo>;
   private branchConfigs: Map<string, BranchConfig>;
   private options: Required<GatewayPairOptions>;
+  
+  // 当前正在播放动画的边ID列表
+  private animatingEdgeIds: string[] = [];
 
   // 保存绑定后的事件处理器，用于正确移除监听
   private boundHandleNodeDndAdd: (data: { data: any }) => void;
   private boundHandleNodeDelete: (data: { data: any }) => void;
   private boundHandleEdgeDelete: (data: { data: any }) => void;
   private boundHandleEdgeAdd: (data: { data: any }) => void;
+  private boundHandleNodeClick: (data: { data: any }) => void;
+  private boundHandleNodeTextUpdate: (data: { data: any }) => void;
 
   constructor(lf: LogicFlow, options?: GatewayPairOptions) {
     this.lf = lf;
@@ -85,6 +92,8 @@ export class GatewayPairManager {
     this.boundHandleNodeDelete = this.handleNodeDelete.bind(this);
     this.boundHandleEdgeDelete = this.handleEdgeDelete.bind(this);
     this.boundHandleEdgeAdd = this.handleEdgeAdd.bind(this);
+    this.boundHandleNodeClick = this.handleNodeClick.bind(this);
+    this.boundHandleNodeTextUpdate = this.handleNodeTextUpdate.bind(this);
 
     this.init();
   }
@@ -104,6 +113,12 @@ export class GatewayPairManager {
 
     // 监听边添加事件（验证连线规则）
     this.lf.on('edge:add', this.boundHandleEdgeAdd);
+
+    // 监听节点点击事件（开启边动画）
+    this.lf.on('node:click', this.boundHandleNodeClick);
+
+    // 监听文本更新事件（同步网关名称）
+    this.lf.on('text:update', this.boundHandleNodeTextUpdate);
   }
 
   /**
@@ -278,6 +293,9 @@ export class GatewayPairManager {
     const forkId = forkGateway.id || `InclusiveGateway_Fork_${timestamp}`;
     // 生成聚合网关ID
     const joinId = `InclusiveGateway_Join_${timestamp}`;
+    
+    // 网关名称（分流和聚合节点共享）
+    const gatewayName = '包容网关';
 
     try {
       // 1. 更新或创建分流网关
@@ -287,7 +305,7 @@ export class GatewayPairManager {
           type: 'inclusiveGateway',
           x: forkGateway.x,
           y: forkGateway.y,
-          text: '分流',
+          text: gatewayName,
           properties: {
             pairId: joinId,
             pairType: 'fork',
@@ -305,17 +323,17 @@ export class GatewayPairManager {
         });
         const forkNode = this.lf.getNodeModelById(forkId);
         if (forkNode && !forkNode.text?.value) {
-          forkNode.setText('分流');
+          forkNode.setText(gatewayName);
         }
       }
 
-      // 2. 创建聚合网关（包容网关类型）
+      // 2. 创建聚合网关（包容网关类型）- 使用相同的名称
       this.lf.addNode({
         id: joinId,
         type: 'inclusiveGateway',
         x: forkGateway.x + offsetX,
         y: forkGateway.y,
-        text: '聚合',
+        text: gatewayName,
         properties: {
           pairId: forkId,
           pairType: 'join',
@@ -426,6 +444,7 @@ export class GatewayPairManager {
           flowInId: defaultFlowId,
           flowOutId: defaultToJoinFlowId,
         },
+        gatewayName,  // 保存网关名称
         createdAt: new Date().toISOString(),
       };
 
@@ -730,6 +749,178 @@ export class GatewayPairManager {
   }
 
   /**
+   * 关闭所有正在播放的边动画
+   */
+  private closeAllAnimations() {
+    this.animatingEdgeIds.forEach((edgeId) => {
+      const edgeModel = this.lf.getEdgeModelById(edgeId);
+      if (edgeModel) {
+        edgeModel.closeEdgeAnimation();
+      }
+    });
+    this.animatingEdgeIds = [];
+  }
+
+  /**
+   * 处理节点点击事件
+   * 当点击包容网关分流节点时，开启从分流到聚合网关的所有边的动画
+   * 当点击其他节点时，关闭正在进行的动画
+   */
+  private handleNodeClick({ data }: { data: any }) {
+    // 检查是否是包容网关
+    if (data.type !== 'inclusiveGateway') {
+      // 点击的不是包容网关，关闭所有动画
+      this.closeAllAnimations();
+      return;
+    }
+
+    // 获取配对信息
+    const pairInfo = this.gatewayPairs.get(data.id);
+    if (!pairInfo) {
+      // 没有配对信息，关闭所有动画
+      this.closeAllAnimations();
+      return;
+    }
+
+    // 检查是否是分流网关（fork）
+    const nodeModel = this.lf.getNodeModelById(data.id);
+    if (!nodeModel) {
+      this.closeAllAnimations();
+      return;
+    }
+
+    // 通过 pairId 判断：如果 data.id === pairInfo.forkId，则是分流网关
+    if (data.id !== pairInfo.forkId) {
+      // 不是分流网关，关闭所有动画
+      this.closeAllAnimations();
+      return;
+    }
+
+    // 确保有聚合网关
+    if (!pairInfo.joinId) {
+      this.closeAllAnimations();
+      return;
+    }
+
+    // 先关闭之前的动画
+    this.closeAllAnimations();
+
+    // 收集需要开启动画的边ID
+    const edgeIdsToAnimate: string[] = [];
+
+    // 1. 收集分流网关到所有分支任务节点的边
+    pairInfo.branches.forEach((branch) => {
+      edgeIdsToAnimate.push(branch.flowInId);
+      if (branch.flowOutId) {
+        edgeIdsToAnimate.push(branch.flowOutId);
+      }
+    });
+
+    // 2. 收集默认分支的边
+    edgeIdsToAnimate.push(pairInfo.defaultBranch.flowInId);
+    if (pairInfo.defaultBranch.flowOutId) {
+      edgeIdsToAnimate.push(pairInfo.defaultBranch.flowOutId);
+    }
+
+    // 3. 开启所有边的动画
+    edgeIdsToAnimate.forEach((edgeId) => {
+      const edgeModel = this.lf.getEdgeModelById(edgeId);
+      if (edgeModel) {
+        edgeModel.openEdgeAnimation();
+      }
+    });
+
+    // 4. 记录正在播放动画的边ID
+    this.animatingEdgeIds = edgeIdsToAnimate;
+
+    console.log('[包容网关] 已开启分流到聚合网关的边动画，边数量:', edgeIdsToAnimate.length);
+  }
+
+  /**
+   * 处理文本更新事件
+   * 当修改包容网关节点文本时，同步更新配对节点的文本
+   */
+  private handleNodeTextUpdate(eventData: { data?: any; e?: MouseEvent | FocusEvent; model?: any }) {
+    const { data, model } = eventData;
+    
+    // 调试：打印事件数据
+    console.log('[包容网关] text:update 事件触发:', eventData);
+
+    // 获取节点模型和节点数据
+    const nodeModel = model;
+    const nodeData = data;
+    
+    if (!nodeModel && !nodeData) {
+      console.log('[包容网关] 没有节点模型或数据，跳过');
+      return;
+    }
+
+    // 检查是否是包容网关（优先从 model 获取类型）
+    const nodeType = nodeModel?.type || nodeData?.type;
+    if (nodeType !== 'inclusiveGateway') {
+      console.log('[包容网关] 不是包容网关，跳过，类型:', nodeType);
+      return;
+    }
+
+    // 获取节点ID（优先从 model 获取）
+    const nodeId = nodeModel?.id || nodeData?.id;
+    if (!nodeId) {
+      console.log('[包容网关] 没有节点ID，跳过');
+      return;
+    }
+
+    // 获取配对信息
+    const pairInfo = this.gatewayPairs.get(nodeId);
+    console.log('[包容网关] 配对信息:', pairInfo);
+    
+    if (!pairInfo || !pairInfo.joinId) {
+      console.log('[包容网关] 没有配对信息或没有聚合节点，跳过');
+      return;
+    }
+
+    // 获取新文本（从 model 或 data 获取）
+    const newText = nodeModel?.text?.value || nodeData?.text?.value ||
+                    (typeof nodeModel?.text === 'string' ? nodeModel.text : null) ||
+                    (typeof nodeData?.text === 'string' ? nodeData.text : null);
+    console.log('[包容网关] 新文本:', newText);
+    
+    if (!newText) {
+      console.log('[包容网关] 新文本为空，跳过');
+      return;
+    }
+
+    // 确定配对节点的ID
+    const pairedNodeId = nodeId === pairInfo.forkId ? pairInfo.joinId : pairInfo.forkId;
+    console.log('[包容网关] 配对节点ID:', pairedNodeId, '当前节点ID:', nodeId, 'forkId:', pairInfo.forkId, 'joinId:', pairInfo.joinId);
+
+    // 获取配对节点
+    const pairedNode = this.lf.getNodeModelById(pairedNodeId);
+    console.log('[包容网关] 配对节点模型:', pairedNode);
+    
+    if (!pairedNode) {
+      console.log('[包容网关] 未找到配对节点，跳过');
+      return;
+    }
+
+    // 检查文本是否相同，避免循环更新
+    const pairedNodeText = typeof pairedNode.text === 'string' ? pairedNode.text : pairedNode.text?.value;
+    console.log('[包容网关] 配对节点当前文本:', pairedNodeText);
+    
+    if (pairedNodeText === newText) {
+      console.log('[包容网关] 文本相同，跳过更新');
+      return;
+    }
+
+    // 使用 LogicFlow 的 updateText 方法更新配对节点的文本
+    this.lf.updateText(pairedNodeId, newText);
+
+    // 更新 pairInfo 中的 gatewayName
+    pairInfo.gatewayName = newText;
+
+    console.log('[包容网关] 同步更新配对节点文本成功:', pairedNodeId, '->', newText);
+  }
+
+  /**
    * 手动添加新分支（仅包容网关支持）
    */
   public addBranch(
@@ -868,6 +1059,8 @@ export class GatewayPairManager {
     this.lf.off('node:delete', this.boundHandleNodeDelete);
     this.lf.off('edge:delete', this.boundHandleEdgeDelete);
     this.lf.off('edge:add', this.boundHandleEdgeAdd);
+    this.lf.off('node:click', this.boundHandleNodeClick);
+    this.lf.off('text:update', this.boundHandleNodeTextUpdate);
     this.gatewayPairs.clear();
     this.branchConfigs.clear();
   }

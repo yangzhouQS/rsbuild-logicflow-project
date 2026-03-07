@@ -62,7 +62,7 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 		FlowPath,
 		AutoLayout,
 		// DndPanel,
-		ProximityConnect ,
+		// ProximityConnect ,
 		Menu,
 		ContextMenu,
 		Group,

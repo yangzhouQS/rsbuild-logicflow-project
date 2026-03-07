@@ -2,7 +2,8 @@
  * 网关节点模块导出
  * 提供排他网关和包容网关的注册和使用方法
  */
-import type LogicFlow, { GraphModel } from '@logicflow/core';
+import type LogicFlow from '@logicflow/core';
+import type { GraphModel } from '@logicflow/core';
 import { ExclusiveGatewayNode } from './ExclusiveGatewayNode';
 import { ExclusiveGatewayModel } from './ExclusiveGatewayModel';
 import { InclusiveGatewayNode } from './InclusiveGatewayNode';
