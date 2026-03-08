@@ -2,6 +2,8 @@
  * 包容网关节点模型
  * 基于RectNode扩展，渲染为菱形外观
  */
+import { uniqueId } from '@/views/flow/design/common/unique-id.ts';
+import { getModelText } from '@/views/flow/design/common/utils.ts';
 import { cloneDeep, isNil } from 'lodash-es';
 import { RectNodeModel } from '@logicflow/core';
 import type { GraphModel } from '@logicflow/core';
@@ -40,6 +42,23 @@ export class InclusiveGatewayModel<
     if (isNil(this.height)) {
       this.height = DEFAULT_CONFIG.defaultHeight;
     }
+
+
+	  const nodes = this.graphModel.nodes;
+	  let text = `包容网关-${nodes.length + 1}`;
+
+	  // 处理重复
+	  for (const node of nodes) {
+		  const nodeText = getModelText(node.text);
+		  if (nodeText === text) {
+			  text += uniqueId("_");
+		  }
+	  }
+
+	  Object.assign(this.properties, {
+		  stepName: text
+	  });
+	  this.text.value = text;
   }
 
   setAttributes() {
