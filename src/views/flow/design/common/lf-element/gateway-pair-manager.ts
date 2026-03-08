@@ -217,6 +217,7 @@ export class GatewayPairManager {
           condition: '${conditionA === true}',
           branchType: 'exclusive',
           isDefault: false,
+          forkGatewayId: forkId,
         },
       });
 
@@ -231,6 +232,7 @@ export class GatewayPairManager {
         properties: {
           isDefault: true,
           branchType: 'default',
+          forkGatewayId: forkId,
         },
       });
 
@@ -389,6 +391,8 @@ export class GatewayPairManager {
           condition: '${conditionA === true}',
           branchType: 'normal',
           isDefault: false,
+          forkGatewayId: forkId,
+          joinGatewayId: joinId,
         },
       });
 
@@ -403,6 +407,8 @@ export class GatewayPairManager {
         properties: {
           isDefault: true,
           branchType: 'default',
+          forkGatewayId: forkId,
+          joinGatewayId: joinId,
         },
       });
 
@@ -415,6 +421,8 @@ export class GatewayPairManager {
         targetNodeId: joinId,
         properties: {
           branchType: 'normal',
+          forkGatewayId: forkId,
+          joinGatewayId: joinId,
         },
       });
 
@@ -428,6 +436,8 @@ export class GatewayPairManager {
         properties: {
           branchType: 'default',
           isDefault: true,
+          forkGatewayId: forkId,
+          joinGatewayId: joinId,
         },
       });
 
@@ -759,6 +769,7 @@ export class GatewayPairManager {
    * 1. 两个节点之间只能有一条连线
    * 2. 连线的起点和终点不能是同一个节点（禁止自连接）
    * 3. 包容网关：不允许在分流节点和聚合节点之间直接连线
+   * 4. 自动为连接到包容网关的节点和连线添加 forkGatewayId 和 joinGatewayId 属性
    */
   private handleEdgeAdd({ data }: { data: any }) {
     const { sourceNodeId, targetNodeId, id } = data;
@@ -819,7 +830,103 @@ export class GatewayPairManager {
       return false;
     }
 
+    // 规则4：自动为连接到包容网关的节点和连线添加网关ID属性
+    this.assignGatewayIdsToEdge(data, sourcePairInfo, targetPairInfo);
+
     return true;
+  }
+
+  /**
+   * 为连接到包容网关的边和节点自动分配 forkGatewayId 和 joinGatewayId
+   * 场景：
+   * 1. 从包容网关分流节点连线到普通节点 -> 添加 forkGatewayId
+   * 2. 从普通节点连线到包容网关聚合节点 -> 添加 joinGatewayId
+   * 3. 如果节点同时连接分流和聚合节点，则同时拥有两个属性
+   */
+  private assignGatewayIdsToEdge(
+    edgeData: any,
+    sourcePairInfo: PairInfo | undefined,
+    targetPairInfo: PairInfo | undefined
+  ) {
+    const { sourceNodeId, targetNodeId, id } = edgeData;
+    const forkGatewayId: string | undefined = undefined;
+    const joinGatewayId: string | undefined = undefined;
+
+    // 获取源节点和目标节点的模型
+    const sourceNode = this.lf.getNodeModelById(sourceNodeId);
+    const targetNode = this.lf.getNodeModelById(targetNodeId);
+    const edgeModel = this.lf.getEdgeModelById(id);
+
+    if (!sourceNode || !targetNode || !edgeModel) {
+      return;
+    }
+
+    // 场景1：从包容网关分流节点连线到普通节点
+    if (sourcePairInfo && sourcePairInfo.gatewayType === 'inclusiveGateway' && sourceNodeId === sourcePairInfo.forkId) {
+      // 为连线添加属性
+      this.lf.setProperties(id, {
+        ...edgeModel.getProperties(),
+        forkGatewayId: sourcePairInfo.forkId,
+        joinGatewayId: sourcePairInfo.joinId,
+        branchType: 'normal',
+        isDefault: false,
+      });
+
+      // 为目标节点（普通节点）添加属性
+      const targetProps = targetNode.getProperties();
+      if (!targetProps.forkGatewayId && !targetProps.joinGatewayId) {
+        this.lf.setProperties(targetNodeId, {
+          ...targetProps,
+          forkGatewayId: sourcePairInfo.forkId,
+          joinGatewayId: sourcePairInfo.joinId,
+          branchType: 'normal',
+          isDefault: false,
+        });
+        console.log('[包容网关] 已为节点添加网关ID属性:', targetNodeId, {
+          forkGatewayId: sourcePairInfo.forkId,
+          joinGatewayId: sourcePairInfo.joinId,
+        });
+      }
+
+      // 将新分支添加到 pairInfo.branches
+      const newBranch: BranchInfo = {
+        taskId: targetNodeId,
+        flowInId: id,
+      };
+      sourcePairInfo.branches.push(newBranch);
+      console.log('[包容网关] 已添加新分支到配对信息:', newBranch);
+    }
+
+    // 场景2：从普通节点连线到包容网关聚合节点
+    if (targetPairInfo && targetPairInfo.gatewayType === 'inclusiveGateway' && targetNodeId === targetPairInfo.joinId) {
+      // 为连线添加属性
+      this.lf.setProperties(id, {
+        ...edgeModel.getProperties(),
+        forkGatewayId: targetPairInfo.forkId,
+        joinGatewayId: targetPairInfo.joinId,
+        branchType: 'normal',
+      });
+
+      // 为源节点（普通节点）添加属性（如果还没有）
+      const sourceProps = sourceNode.getProperties();
+      // 只更新 joinGatewayId，保留已有的 forkGatewayId
+      if (!sourceProps.joinGatewayId) {
+        this.lf.setProperties(sourceNodeId, {
+          ...sourceProps,
+          joinGatewayId: targetPairInfo.joinId,
+        });
+        console.log('[包容网关] 已为节点添加聚合网关ID属性:', sourceNodeId, {
+          joinGatewayId: targetPairInfo.joinId,
+        });
+      }
+
+      // 更新 pairInfo.branches 中对应分支的 flowOutId
+      const existingBranch = targetPairInfo.branches.find(b => b.taskId === sourceNodeId);
+      if (existingBranch && !existingBranch.flowOutId) {
+        existingBranch.flowOutId = id;
+        console.log('[包容网关] 已更新分支的出口连线:', existingBranch);
+      }
+    }
   }
 
   /**
@@ -1055,6 +1162,8 @@ export class GatewayPairManager {
         condition: condition,
         branchType: 'normal',
         isDefault: false,
+        forkGatewayId: forkGatewayId,
+        joinGatewayId: pairInfo.joinId,
       },
     });
 
@@ -1067,6 +1176,8 @@ export class GatewayPairManager {
       targetNodeId: pairInfo.joinId,
       properties: {
         branchType: 'normal',
+        forkGatewayId: forkGatewayId,
+        joinGatewayId: pairInfo.joinId,
       },
     });
 

@@ -16,6 +16,7 @@
 - 删除任一网关节点时联动删除配对网关及所有分支
 - 默认分支连线和节点不允许单独删除
 - 分流节点和聚合节点之间不允许直接连线
+- **自动属性分配**：手动拖入普通节点并连接到包容网关时，自动为节点和连线添加 `forkGatewayId` 和 `joinGatewayId` 属性
 
 ### 通用连线规则
 - 两个节点之间只能有一条连线
@@ -207,6 +208,45 @@ registerExclusiveGateway(lf, {
 - 默认分支的任务节点不允许单独删除
 - 只有在删除整个网关时才会联动删除这些受保护的元素
 
+## 自动属性分配
+
+当手动拖入普通节点（如 `rect`）并连接到包容网关时，系统会自动为节点和连线添加网关ID属性。
+
+### 触发场景
+
+| 场景 | 操作 | 自动添加的属性 |
+|------|------|----------------|
+| 从分流网关连线到普通节点 | 从包容网关分流节点拖线到普通节点 | 节点和连线都会添加 `forkGatewayId` 和 `joinGatewayId` |
+| 从普通节点连线到聚合网关 | 从普通节点拖线到包容网关聚合节点 | 节点添加 `joinGatewayId`，连线添加 `forkGatewayId` 和 `joinGatewayId` |
+
+### 属性说明
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| forkGatewayId | string | 所属分流网关 ID |
+| joinGatewayId | string | 所属聚合网关 ID |
+| branchType | string | 分支类型：'normal'（普通分支）或 'default'（默认分支） |
+| isDefault | boolean | 是否为默认分支 |
+
+### 示例
+
+```typescript
+// 1. 拖入包容网关，自动创建分流和聚合节点
+// 2. 拖入普通 rect 节点到画布
+// 3. 从分流网关连线到 rect 节点
+// 系统自动为 rect 节点添加属性：
+// {
+//   forkGatewayId: 'inclusive-gateway-fork-xxx',
+//   joinGatewayId: 'inclusive-gateway-join-xxx',
+//   branchType: 'normal',
+//   isDefault: false,
+// }
+
+// 4. 从 rect 节点连线到聚合网关
+// 系统自动更新 rect 节点的 joinGatewayId 属性（如果还没有）
+// 并为连线添加完整的网关ID属性
+```
+
 ## ID 生成规则
 
 所有节点和边的 ID 使用 UUID v4 格式生成：
@@ -227,6 +267,11 @@ registerExclusiveGateway(lf, {
 4. **锚点配置**：自定义网关节点的锚点已包含 id 属性，确保连线功能正常
 
 ## 更新日志
+
+### v1.2.0
+- 新增：自动属性分配功能，手动拖入普通节点并连接到包容网关时，自动添加 `forkGatewayId` 和 `joinGatewayId` 属性
+- 新增：新分支自动注册到 `pairInfo.branches` 中，便于统一管理
+- 优化：连线时自动更新节点的网关ID属性
 
 ### v1.1.0
 - 新增：包容网关分流和聚合节点之间不允许直接连线的限制
