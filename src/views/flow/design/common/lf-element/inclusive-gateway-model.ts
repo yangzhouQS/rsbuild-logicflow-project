@@ -42,23 +42,6 @@ export class InclusiveGatewayModel<
     if (isNil(this.height)) {
       this.height = DEFAULT_CONFIG.defaultHeight;
     }
-
-
-	  const nodes = this.graphModel.nodes;
-	  let text = `包容网关-${nodes.length + 1}`;
-
-	  // 处理重复
-	  for (const node of nodes) {
-		  const nodeText = getModelText(node.text);
-		  if (nodeText === text) {
-			  text += uniqueId("_");
-		  }
-	  }
-
-	  Object.assign(this.properties, {
-		  stepName: text
-	  });
-	  this.text.value = text;
   }
 
   setAttributes() {

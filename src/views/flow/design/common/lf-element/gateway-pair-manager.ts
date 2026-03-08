@@ -292,9 +292,13 @@ export class GatewayPairManager {
     const forkId = forkGateway.id || `inclusive-gateway-fork-${uuidv4()}`;
     // 生成聚合网关ID
     const joinId = `inclusive-gateway-join-${uuidv4()}`;
-    
+
+	  const nodes = this.lf?.graphModel.nodes;
+
+
     // 网关名称（分流和聚合节点共享）
-    const gatewayName = '包容网关';
+	  const gatewayName = `并行网关-${nodes.length + 1}`;
+    // const gatewayName = '包容网关';
 
     try {
       // 1. 更新或创建分流网关
@@ -306,6 +310,7 @@ export class GatewayPairManager {
           y: forkGateway.y,
           text: gatewayName,
           properties: {
+						stepName: gatewayName,
             pairId: joinId,
             pairType: 'fork',
             gatewayType: 'inclusive',
@@ -315,6 +320,7 @@ export class GatewayPairManager {
       } else {
         // 更新已存在节点的属性
         this.lf.setProperties(forkId, {
+	        stepName: gatewayName,
           pairId: joinId,
           pairType: 'fork',
           gatewayType: 'inclusive',
