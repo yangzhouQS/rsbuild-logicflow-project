@@ -842,6 +842,7 @@ export class GatewayPairManager {
    * 1. 从包容网关分流节点连线到普通节点 -> 添加 forkGatewayId
    * 2. 从普通节点连线到包容网关聚合节点 -> 添加 joinGatewayId
    * 3. 如果节点同时连接分流和聚合节点，则同时拥有两个属性
+   * 4. 嵌套包容网关：内层包容网关的分流和聚合节点也需要添加外层网关的属性
    */
   private assignGatewayIdsToEdge(
     edgeData: any,
@@ -849,8 +850,6 @@ export class GatewayPairManager {
     targetPairInfo: PairInfo | undefined
   ) {
     const { sourceNodeId, targetNodeId, id } = edgeData;
-    const forkGatewayId: string | undefined = undefined;
-    const joinGatewayId: string | undefined = undefined;
 
     // 获取源节点和目标节点的模型
     const sourceNode = this.lf.getNodeModelById(sourceNodeId);
@@ -861,7 +860,7 @@ export class GatewayPairManager {
       return;
     }
 
-    // 场景1：从包容网关分流节点连线到普通节点
+    // 场景1：从包容网关分流节点连线到其他节点（普通节点或内层包容网关的分流节点）
     if (sourcePairInfo && sourcePairInfo.gatewayType === 'inclusiveGateway' && sourceNodeId === sourcePairInfo.forkId) {
       // 为连线添加属性
       this.lf.setProperties(id, {
@@ -872,8 +871,9 @@ export class GatewayPairManager {
         isDefault: false,
       });
 
-      // 为目标节点（普通节点）添加属性
+      // 为目标节点添加属性
       const targetProps = targetNode.getProperties();
+      // 如果目标节点还没有外层网关ID属性，则添加
       if (!targetProps.forkGatewayId && !targetProps.joinGatewayId) {
         this.lf.setProperties(targetNodeId, {
           ...targetProps,
@@ -895,9 +895,32 @@ export class GatewayPairManager {
       };
       sourcePairInfo.branches.push(newBranch);
       console.log('[包容网关] 已添加新分支到配对信息:', newBranch);
+
+      // 如果目标节点是内层包容网关的分流节点，则同时为内层包容网关的聚合节点添加属性
+      if (targetPairInfo && targetPairInfo.gatewayType === 'inclusiveGateway' && targetNodeId === targetPairInfo.forkId) {
+        // 内层包容网关的聚合节点也需要添加外层网关的属性
+        if (targetPairInfo.joinId) {
+          const innerJoinNode = this.lf.getNodeModelById(targetPairInfo.joinId);
+          if (innerJoinNode) {
+            const innerJoinProps = innerJoinNode.getProperties();
+            // 只添加外层网关ID，保留内层网关的 pairId 等属性
+            this.lf.setProperties(targetPairInfo.joinId, {
+              ...innerJoinProps,
+              // 使用 parentForkGatewayId 和 parentJoinGatewayId 来存储外层网关ID
+              // 避免与内层网关的 forkGatewayId 冲突
+              parentForkGatewayId: sourcePairInfo.forkId,
+              parentJoinGatewayId: sourcePairInfo.joinId,
+            });
+            console.log('[包容网关] 已为内层包容网关的聚合节点添加外层网关ID属性:', targetPairInfo.joinId, {
+              parentForkGatewayId: sourcePairInfo.forkId,
+              parentJoinGatewayId: sourcePairInfo.joinId,
+            });
+          }
+        }
+      }
     }
 
-    // 场景2：从普通节点连线到包容网关聚合节点
+    // 场景2：从其他节点（普通节点或内层包容网关的聚合节点）连线到包容网关聚合节点
     if (targetPairInfo && targetPairInfo.gatewayType === 'inclusiveGateway' && targetNodeId === targetPairInfo.joinId) {
       // 为连线添加属性
       this.lf.setProperties(id, {
@@ -907,7 +930,7 @@ export class GatewayPairManager {
         branchType: 'normal',
       });
 
-      // 为源节点（普通节点）添加属性（如果还没有）
+      // 为源节点添加属性（如果还没有）
       const sourceProps = sourceNode.getProperties();
       // 只更新 joinGatewayId，保留已有的 forkGatewayId
       if (!sourceProps.joinGatewayId) {
@@ -925,6 +948,24 @@ export class GatewayPairManager {
       if (existingBranch && !existingBranch.flowOutId) {
         existingBranch.flowOutId = id;
         console.log('[包容网关] 已更新分支的出口连线:', existingBranch);
+      }
+
+      // 如果源节点是内层包容网关的聚合节点，确保它也有外层网关的属性
+      if (sourcePairInfo && sourcePairInfo.gatewayType === 'inclusiveGateway' && sourceNodeId === sourcePairInfo.joinId) {
+        // 内层包容网关的聚合节点连接到外层包容网关的聚合节点
+        // 确保内层聚合节点有外层网关的属性
+        const sourceNodeProps = sourceNode.getProperties();
+        if (!sourceNodeProps.parentForkGatewayId && !sourceNodeProps.parentJoinGatewayId) {
+          this.lf.setProperties(sourceNodeId, {
+            ...sourceNodeProps,
+            parentForkGatewayId: targetPairInfo.forkId,
+            parentJoinGatewayId: targetPairInfo.joinId,
+          });
+          console.log('[包容网关] 已为内层包容网关的聚合节点添加外层网关ID属性:', sourceNodeId, {
+            parentForkGatewayId: targetPairInfo.forkId,
+            parentJoinGatewayId: targetPairInfo.joinId,
+          });
+        }
       }
     }
   }

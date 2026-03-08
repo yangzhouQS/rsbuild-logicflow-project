@@ -247,6 +247,33 @@ registerExclusiveGateway(lf, {
 // 并为连线添加完整的网关ID属性
 ```
 
+### 嵌套包容网关
+
+当一个包容网关作为另一个包容网关的分支时，内层包容网关的分流节点和聚合节点会自动添加外层网关的属性。
+
+**属性说明：**
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| forkGatewayId | string | 所属内层分流网关 ID |
+| joinGatewayId | string | 所属内层聚合网关 ID |
+| parentForkGatewayId | string | 所属外层分流网关 ID（嵌套时） |
+| parentJoinGatewayId | string | 所属外层聚合网关 ID（嵌套时） |
+
+**示例场景：**
+
+```
+外层包容网关 A（分流节点 A1，聚合节点 A2）
+└── 内层包容网关 B（分流节点 B1，聚合节点 B2）作为 A 的一个分支
+```
+
+当从 A1 连线到 B1 时：
+- B1 节点属性：`{ forkGatewayId: A1, joinGatewayId: A2, ... }`
+- B2 节点属性：`{ parentForkGatewayId: A1, parentJoinGatewayId: A2, ... }`
+
+当从 B2 连线到 A2 时：
+- B2 节点属性会更新，确保有完整的外层网关属性
+
 ## ID 生成规则
 
 所有节点和边的 ID 使用 UUID v4 格式生成：
@@ -267,6 +294,10 @@ registerExclusiveGateway(lf, {
 4. **锚点配置**：自定义网关节点的锚点已包含 id 属性，确保连线功能正常
 
 ## 更新日志
+
+### v1.3.0
+- 新增：嵌套包容网关支持，内层包容网关的分流和聚合节点自动添加外层网关的属性
+- 新增：`parentForkGatewayId` 和 `parentJoinGatewayId` 属性用于存储外层网关ID
 
 ### v1.2.0
 - 新增：自动属性分配功能，手动拖入普通节点并连接到包容网关时，自动添加 `forkGatewayId` 和 `joinGatewayId` 属性
