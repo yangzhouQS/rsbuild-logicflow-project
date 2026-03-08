@@ -24,6 +24,7 @@ import type {
   BranchConfig,
   GatewayPairOptions,
 } from './gateway-pair-manager';
+import { FlowNodeTypeEnum } from '@/views/flow/design/config/config';
 
 // 导出类型
 export type {
@@ -49,9 +50,9 @@ export {
   GatewayPairManager,
 };
 
-// 节点类型标识
-export const EXCLUSIVE_GATEWAY_TYPE = 'exclusiveGateway';
-export const INCLUSIVE_GATEWAY_TYPE = 'inclusiveGateway';
+// 节点类型标识（使用 FlowNodeTypeEnum 枚举）
+export const EXCLUSIVE_GATEWAY_TYPE = FlowNodeTypeEnum.EXCLUSIVE_GATEWAY;
+export const INCLUSIVE_GATEWAY_TYPE = FlowNodeTypeEnum.INCLUSIVE_GATEWAY;
 
 /**
  * 默认配置

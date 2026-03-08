@@ -1,22 +1,29 @@
-import { EXCLUSIVE_GATEWAY_TYPE, INCLUSIVE_GATEWAY_TYPE } from '@/views/flow/design/common/lf-element';
 import { IconExclusive, IconFlowEnd, IconFlowRect, IconFlowStart, IconInclusive } from '@/views/flow/design/icons';
 import type LogicFlow from '@logicflow/core';
 import {
 	AutoLayout,
-	BpmnElement,
-	BpmnXmlAdapter,
 	ContextMenu,
 	Control,
-	DndPanel,
-	ProximityConnect ,
 	FlowPath,
 	Menu,
-	Group,
-	MiniMap,
 	SelectionSelect,
 	Snapshot,
 } from '@logicflow/extension'
 
+/**
+ * 节点类型枚举
+ */
+export enum FlowNodeTypeEnum {
+	START_NODE = 'start',
+	END_NODE = 'end',
+	NORMAL_NODE = 'rect',
+	EXCLUSIVE_GATEWAY = 'exclusiveGateway',
+	INCLUSIVE_GATEWAY = 'inclusiveGateway',
+}
+
+/*
+* 引擎初始化配置项
+*  */
 export const logicFlowConfig: Partial<LogicFlow.Options> = {
 	isSilentMode: false, // 仅浏览不可编辑模式，默认不开启。
 	stopScrollGraph: true, // 禁止鼠标滚动移动画布。
@@ -125,10 +132,13 @@ export const logicFlowCustomTheme: Partial<LogicFlow.Theme> = {
 };
 
 
-
+/**
+ * 流程节点
+ * @type {({type: FlowNodeTypeEnum, label: string, icon: any, style: {width: string, height: string, borderRadius: string, border: string}, properties: {}} | {type: FlowNodeTypeEnum, label: string, icon: any, style: {width: string, height: string, borderRadius: string, border: string}, properties: {}} | {type: FlowNodeTypeEnum, label: string, icon: any, style: {width: string, height: string, borderRadius: string, border: string}, properties: {}} | {type: FlowNodeTypeEnum, label: string, icon: any, style: {width: string, height: string, borderRadius: string, border: string}, properties: {refY: number}} | {type: FlowNodeTypeEnum, label: string, icon: any, style: {width: string, height: string, borderRadius: string, border: string}, properties: {}})[]}
+ */
 export const flowApproveNodes = [
 	{
-		type: "start",
+		type: FlowNodeTypeEnum.START_NODE,
 		label: "开始",
 		icon: IconFlowStart,
 		style: {
@@ -142,7 +152,7 @@ export const flowApproveNodes = [
 		},
 	},
 	{
-		type: "rect",
+		type: FlowNodeTypeEnum.NORMAL_NODE,
 		label: "普通步骤",
 		icon: IconFlowRect,
 		style: {
@@ -156,7 +166,7 @@ export const flowApproveNodes = [
 		},
 	},
 	{
-		type: EXCLUSIVE_GATEWAY_TYPE,
+		type: FlowNodeTypeEnum.EXCLUSIVE_GATEWAY,
 		label: "排他网关",
 		icon: IconExclusive,
 		style: {
@@ -170,7 +180,7 @@ export const flowApproveNodes = [
 		},
 	},
 	{
-		type: INCLUSIVE_GATEWAY_TYPE,
+		type: FlowNodeTypeEnum.INCLUSIVE_GATEWAY,
 		label: "并行网关",
 		icon: IconInclusive,
 		style: {
@@ -184,21 +194,8 @@ export const flowApproveNodes = [
 			refY: 66,
 		},
 	},
-	/* {
-		type: 'branch',
-		label: '条件分支',
-		icon: IconFlowBranch,
-		style: {
-			width: '30px',
-			height: '30px',
-			borderRadius: '15px',
-			border: '2px solid #FF6347'
-		},
-		properties: { // 节点业务属性
-		}
-	}, */
 	{
-		type: "end",
+		type: FlowNodeTypeEnum.END_NODE,
 		label: "结束",
 		icon: IconFlowEnd,
 		style: {
@@ -213,14 +210,3 @@ export const flowApproveNodes = [
 	},
 ];
 
-
-/**
- * 节点类型枚举
- */
-export enum FlowNodeTypeEnum {
-	START_NODE = 'start',
-	END_NODE = 'end',
-	NORMAL_NODE = 'rect',
-	EXCLUSIVE_GATEWAY = 'exclusiveGateway',
-	INCLUSIVE_GATEWAY = 'inclusiveGateway',
-}
