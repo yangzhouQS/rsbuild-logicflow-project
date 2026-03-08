@@ -212,3 +212,15 @@ export const flowApproveNodes = [
 		},
 	},
 ];
+
+
+/**
+ * 节点类型枚举
+ */
+export enum FlowNodeTypeEnum {
+	START_NODE = 'start',
+	END_NODE = 'end',
+	NORMAL_NODE = 'rect',
+	EXCLUSIVE_GATEWAY = 'exclusiveGateway',
+	INCLUSIVE_GATEWAY = 'inclusiveGateway',
+}

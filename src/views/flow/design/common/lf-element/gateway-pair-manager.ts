@@ -11,6 +11,7 @@
  * - 点击包容网关分流节点时，开启到聚合网关连线的动画
  */
 import type LogicFlow from '@logicflow/core';
+import { v4 as uuidv4 } from 'uuid';
 
 // 网关类型
 export type GatewayType = 'exclusiveGateway' | 'inclusiveGateway';
@@ -144,10 +145,9 @@ export class GatewayPairManager {
     id?: string;
   }): PairInfo | null {
     const { taskNodeType, edgeType, branchYOffset } = this.options;
-    const timestamp = Date.now();
 
     // 生成分流网关ID
-    const forkId = forkGateway.id || `ExclusiveGateway_${timestamp}`;
+    const forkId = forkGateway.id || `exclusive-gateway-${uuidv4()}`;
 
     try {
       // 1. 更新或创建分流网关
@@ -176,7 +176,7 @@ export class GatewayPairManager {
       }
 
       // 2. 创建排他分支任务节点（上方）
-      const exclusiveTaskId = `Task_Exclusive_${timestamp}`;
+      const exclusiveTaskId = `task-exclusive-${uuidv4()}`;
       this.lf.addNode({
         id: exclusiveTaskId,
         type: taskNodeType,
@@ -190,7 +190,7 @@ export class GatewayPairManager {
       });
 
       // 3. 创建默认分支任务节点（下方）
-      const defaultTaskId = `Task_Default_${timestamp}`;
+      const defaultTaskId = `task-default-${uuidv4()}`;
       this.lf.addNode({
         id: defaultTaskId,
         type: taskNodeType,
@@ -205,7 +205,7 @@ export class GatewayPairManager {
       });
 
       // 4. 创建排他网关到排他分支的连线
-      const exclusiveFlowId = `Flow_Exclusive_${timestamp}`;
+      const exclusiveFlowId = `flow-exclusive-${uuidv4()}`;
       this.lf.addEdge({
         id: exclusiveFlowId,
         type: edgeType,
@@ -220,7 +220,7 @@ export class GatewayPairManager {
       });
 
       // 5. 创建排他网关到默认分支的连线
-      const defaultFlowId = `Flow_Default_${timestamp}`;
+      const defaultFlowId = `flow-default-${uuidv4()}`;
       this.lf.addEdge({
         id: defaultFlowId,
         type: edgeType,
@@ -287,12 +287,11 @@ export class GatewayPairManager {
     id?: string;
   }): PairInfo | null {
     const { offsetX, taskNodeType, edgeType, branchYOffset } = this.options;
-    const timestamp = Date.now();
 
     // 生成分流网关ID
-    const forkId = forkGateway.id || `InclusiveGateway_Fork_${timestamp}`;
+    const forkId = forkGateway.id || `inclusive-gateway-fork-${uuidv4()}`;
     // 生成聚合网关ID
-    const joinId = `InclusiveGateway_Join_${timestamp}`;
+    const joinId = `inclusive-gateway-join-${uuidv4()}`;
     
     // 网关名称（分流和聚合节点共享）
     const gatewayName = '包容网关';
@@ -341,7 +340,7 @@ export class GatewayPairManager {
       });
 
       // 3. 创建普通分支任务节点（上方）
-      const normalTaskId = `Task_Normal_${timestamp}`;
+      const normalTaskId = `task-normal-${uuidv4()}`;
       this.lf.addNode({
         id: normalTaskId,
         type: taskNodeType,
@@ -356,7 +355,7 @@ export class GatewayPairManager {
       });
 
       // 4. 创建默认分支任务节点（下方）
-      const defaultTaskId = `Task_Default_${timestamp}`;
+      const defaultTaskId = `task-default-${uuidv4()}`;
       this.lf.addNode({
         id: defaultTaskId,
         type: taskNodeType,
@@ -372,7 +371,7 @@ export class GatewayPairManager {
       });
 
       // 5. 创建分流网关到普通分支的连线
-      const normalFlowId = `Flow_Normal_${timestamp}`;
+      const normalFlowId = `flow-normal-${uuidv4()}`;
       this.lf.addEdge({
         id: normalFlowId,
         type: edgeType,
@@ -387,7 +386,7 @@ export class GatewayPairManager {
       });
 
       // 6. 创建分流网关到默认分支的连线
-      const defaultFlowId = `Flow_Default_${timestamp}`;
+      const defaultFlowId = `flow-default-${uuidv4()}`;
       this.lf.addEdge({
         id: defaultFlowId,
         type: edgeType,
@@ -401,7 +400,7 @@ export class GatewayPairManager {
       });
 
       // 7. 创建普通分支到聚合网关的连线
-      const normalToJoinFlowId = `Flow_NormalToJoin_${timestamp}`;
+      const normalToJoinFlowId = `flow-normal-to-join-${uuidv4()}`;
       this.lf.addEdge({
         id: normalToJoinFlowId,
         type: edgeType,
@@ -413,7 +412,7 @@ export class GatewayPairManager {
       });
 
       // 8. 创建默认分支到聚合网关的连线
-      const defaultToJoinFlowId = `Flow_DefaultToJoin_${timestamp}`;
+      const defaultToJoinFlowId = `flow-default-to-join-${uuidv4()}`;
       this.lf.addEdge({
         id: defaultToJoinFlowId,
         type: edgeType,
@@ -941,7 +940,6 @@ export class GatewayPairManager {
     // 包容网关添加分支
     if (!pairInfo.joinId) return null;
 
-    const timestamp = Date.now();
     const { taskNodeType, edgeType, branchYOffset, offsetX } = this.options;
     const forkNode = this.lf.getNodeModelById(forkGatewayId);
     const joinNode = this.lf.getNodeModelById(pairInfo.joinId);
@@ -953,7 +951,7 @@ export class GatewayPairManager {
     const yOffset = branchYOffset * (existingBranches.length + 1);
 
     // 创建新任务节点
-    const newTaskId = `Task_${branchName}_${timestamp}`;
+    const newTaskId = `task-${branchName.toLowerCase().replace(/\s+/g, '-')}-${uuidv4()}`;
     this.lf.addNode({
       id: newTaskId,
       type: taskNodeType,
@@ -969,7 +967,7 @@ export class GatewayPairManager {
     });
 
     // 创建分流网关到新任务的连线
-    const flowInId = `Flow_In_${timestamp}`;
+    const flowInId = `flow-in-${uuidv4()}`;
     this.lf.addEdge({
       id: flowInId,
       type: edgeType,
@@ -984,7 +982,7 @@ export class GatewayPairManager {
     });
 
     // 创建新任务到聚合网关的连线
-    const flowOutId = `Flow_Out_${timestamp}`;
+    const flowOutId = `flow-out-${uuidv4()}`;
     this.lf.addEdge({
       id: flowOutId,
       type: edgeType,
