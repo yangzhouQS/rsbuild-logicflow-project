@@ -5,9 +5,10 @@
  * 功能：
  * - 排他网关：拖入画布时创建一个排他分支 + 一个默认分支（无聚合节点）
  * - 包容网关：拖入画布时创建一个普通分支 + 一个默认分支 + 聚合网关（成对出现）
- * - 默认分支连线及其后的第一个节点禁止删除
+ * - 默认分支连线及其后的第一个节点禁止单独删除
  * - 删除网关时联动删除相关配置
  * - 连线规则：两点之间只能有一条连线，不能自连接
+ * - 包容网关：分流节点和聚合节点之间不允许直接连线
  * - 点击包容网关分流节点时，开启到聚合网关连线的动画
  */
 import type LogicFlow from '@logicflow/core';
@@ -490,73 +491,81 @@ export class GatewayPairManager {
     // 检查是否是受保护的默认分支任务节点
     const nodeConfig = this.branchConfigs.get(data.id);
     if (nodeConfig && !nodeConfig.isDeletable && nodeConfig.isDefault) {
-      // 阻止删除默认分支的任务节点
-      console.warn('默认分支的任务节点不能删除');
-      
-      // 获取配对信息，用于恢复相关的边
+      // 检查是否是网关节点触发的删除（通过检查是否正在删除网关）
       const pairInfo = nodeConfig.pairId;
+      const isDeletingGateway = this.isDeletingGatewayNode(pairInfo);
       
-      // 重新添加被删除的节点和相关边
-      setTimeout(() => {
-        const nodeData = data;
-        // 恢复节点
-        this.lf.addNode({
-          id: nodeData.id,
-          type: nodeData.type,
-          x: nodeData.x,
-          y: nodeData.y,
-          text: nodeData.text,
-          properties: nodeData.properties,
-        });
+      // 如果不是在删除网关，则阻止删除默认分支的任务节点
+      if (!isDeletingGateway) {
+        console.warn('默认分支的任务节点不能单独删除，仅支持与网关一起删除');
         
-         // 使用额外的延迟确保节点完全初始化后再恢复边
+        // 重新添加被删除的节点和相关边
         setTimeout(() => {
-          // 恢复默认分支的边（从分流网关到任务节点）
-          const defaultFlowIn = pairInfo.defaultBranch.flowInId;
-          const flowInEdge = this.lf.getEdgeModelById(defaultFlowIn);
-          if (!flowInEdge) {
-            // 边已被删除，需要恢复
-            this.lf.addEdge({
-              id: defaultFlowIn,
-              type: this.options.edgeType,
-              sourceNodeId: pairInfo.forkId,
-              targetNodeId: nodeData.id,
-              text: '默认',
-              properties: {
-                isDefault: true,
-                branchType: 'default',
-              },
-            });
-            console.log('[保护机制] 已恢复默认分支入口边:', defaultFlowIn);
-          }
+          const nodeData = data;
+          // 恢复节点
+          this.lf.addNode({
+            id: nodeData.id,
+            type: nodeData.type,
+            x: nodeData.x,
+            y: nodeData.y,
+            text: nodeData.text,
+            properties: nodeData.properties,
+          });
           
-          // 如果是包容网关，还需要恢复从任务节点到聚合网关的边
-          if (pairInfo.joinId && pairInfo.defaultBranch.flowOutId) {
-            const defaultFlowOut = pairInfo.defaultBranch.flowOutId;
-            const flowOutEdge = this.lf.getEdgeModelById(defaultFlowOut);
-            if (!flowOutEdge) {
+           // 使用额外的延迟确保节点完全初始化后再恢复边
+          setTimeout(() => {
+            // 恢复默认分支的边（从分流网关到任务节点）
+            const defaultFlowIn = pairInfo.defaultBranch.flowInId;
+            const flowInEdge = this.lf.getEdgeModelById(defaultFlowIn);
+            if (!flowInEdge) {
               // 边已被删除，需要恢复
               this.lf.addEdge({
-                id: defaultFlowOut,
+                id: defaultFlowIn,
                 type: this.options.edgeType,
-                sourceNodeId: nodeData.id,
-                targetNodeId: pairInfo.joinId,
+                sourceNodeId: pairInfo.forkId,
+                targetNodeId: nodeData.id,
+                text: '默认',
                 properties: {
-                  branchType: 'default',
                   isDefault: true,
+                  branchType: 'default',
                 },
               });
-              console.log('[保护机制] 已恢复默认分支出口边:', defaultFlowOut);
+              console.log('[保护机制] 已恢复默认分支入口边:', defaultFlowIn);
             }
-          }
-        }, 10);  // 等待节点完全初始化
-      }, 0);
-      
-      return false;
+            
+            // 如果是包容网关，还需要恢复从任务节点到聚合网关的边
+            if (pairInfo.joinId && pairInfo.defaultBranch.flowOutId) {
+              const defaultFlowOut = pairInfo.defaultBranch.flowOutId;
+              const flowOutEdge = this.lf.getEdgeModelById(defaultFlowOut);
+              if (!flowOutEdge) {
+                // 边已被删除，需要恢复
+                this.lf.addEdge({
+                  id: defaultFlowOut,
+                  type: this.options.edgeType,
+                  sourceNodeId: nodeData.id,
+                  targetNodeId: pairInfo.joinId,
+                  properties: {
+                    branchType: 'default',
+                    isDefault: true,
+                  },
+                });
+                console.log('[保护机制] 已恢复默认分支出口边:', defaultFlowOut);
+              }
+            }
+          }, 10);  // 等待节点完全初始化
+        }, 0);
+        
+        return false;
+      }
+      // 如果是在删除网关，允许删除（不恢复）
+      return;
     }
 
     const pairInfo = this.gatewayPairs.get(data.id);
     if (!pairInfo) return;
+
+    // 标记正在删除网关
+    this.isDeletingGateway = true;
 
     // 排他网关：只删除相关分支
     if (pairInfo.gatewayType === 'exclusiveGateway') {
@@ -572,6 +581,21 @@ export class GatewayPairManager {
     if (pairInfo.joinId) {
       this.gatewayPairs.delete(pairInfo.joinId);
     }
+
+    // 重置标记
+    this.isDeletingGateway = false;
+  }
+
+  /**
+   * 检查是否正在删除网关节点
+   */
+  private isDeletingGateway = false;
+
+  /**
+   * 检查是否正在删除网关节点
+   */
+  private isDeletingGatewayNode(pairInfo: PairInfo): boolean {
+    return this.isDeletingGateway;
   }
 
   /**
@@ -584,27 +608,36 @@ export class GatewayPairManager {
     pairInfo.branches.forEach((branch) => {
       elementsToDelete.push(branch.taskId, branch.flowInId);
     });
+    // 收集默认分支的任务节点和连线
     elementsToDelete.push(pairInfo.defaultBranch.taskId, pairInfo.defaultBranch.flowInId);
 
-    // 临时移除监听
+    // 临时移除边删除监听，避免触发保护机制
     this.lf.off('edge:delete', this.boundHandleEdgeDelete);
+    // 临时移除节点删除监听，避免触发保护机制
+    this.lf.off('node:delete', this.boundHandleNodeDelete);
 
+    // 先删除边，再删除节点
     elementsToDelete.forEach((id) => {
-      const node = this.lf.getNodeModelById(id);
-      if (node) {
-        this.lf.deleteNode(id);
-      }
       const edge = this.lf.getEdgeModelById(id);
       if (edge) {
         this.lf.deleteEdge(id);
       }
     });
 
+    elementsToDelete.forEach((id) => {
+      const node = this.lf.getNodeModelById(id);
+      if (node) {
+        this.lf.deleteNode(id);
+      }
+    });
+
     // 恢复监听
     this.lf.on('edge:delete', this.boundHandleEdgeDelete);
+    this.lf.on('node:delete', this.boundHandleNodeDelete);
 
     // 清理分支配置记录
     this.branchConfigs.delete(pairInfo.defaultBranch.flowInId);
+    this.branchConfigs.delete(pairInfo.defaultBranch.taskId);
   }
 
   /**
@@ -637,33 +670,42 @@ export class GatewayPairManager {
         elementsToDelete.push(branch.flowOutId);
       }
     });
+    // 收集默认分支的任务节点和连线
     elementsToDelete.push(pairInfo.defaultBranch.taskId, pairInfo.defaultBranch.flowInId);
     if (pairInfo.defaultBranch.flowOutId) {
       elementsToDelete.push(pairInfo.defaultBranch.flowOutId);
     }
 
-    // 临时移除监听
+    // 临时移除边删除监听，避免触发保护机制
     this.lf.off('edge:delete', this.boundHandleEdgeDelete);
+    // 临时移除节点删除监听，避免触发保护机制
+    this.lf.off('node:delete', this.boundHandleNodeDelete);
 
+    // 先删除边，再删除节点
     elementsToDelete.forEach((id) => {
-      const node = this.lf.getNodeModelById(id);
-      if (node) {
-        this.lf.deleteNode(id);
-      }
       const edge = this.lf.getEdgeModelById(id);
       if (edge) {
         this.lf.deleteEdge(id);
       }
     });
 
+    elementsToDelete.forEach((id) => {
+      const node = this.lf.getNodeModelById(id);
+      if (node) {
+        this.lf.deleteNode(id);
+      }
+    });
+
     // 恢复监听
     this.lf.on('edge:delete', this.boundHandleEdgeDelete);
+    this.lf.on('node:delete', this.boundHandleNodeDelete);
 
     // 清理分支配置记录
     this.branchConfigs.delete(pairInfo.defaultBranch.flowInId);
     if (pairInfo.defaultBranch.flowOutId) {
       this.branchConfigs.delete(pairInfo.defaultBranch.flowOutId);
     }
+    this.branchConfigs.delete(pairInfo.defaultBranch.taskId);
   }
 
   /**
@@ -716,6 +758,7 @@ export class GatewayPairManager {
    * 规则：
    * 1. 两个节点之间只能有一条连线
    * 2. 连线的起点和终点不能是同一个节点（禁止自连接）
+   * 3. 包容网关：不允许在分流节点和聚合节点之间直接连线
    */
   private handleEdgeAdd({ data }: { data: any }) {
     const { sourceNodeId, targetNodeId, id } = data;
@@ -728,6 +771,34 @@ export class GatewayPairManager {
         this.lf.deleteEdge(id);
       }, 0);
       return false;
+    }
+
+    // 规则3：包容网关连线限制
+    // 检查是否是在包容网关的分流节点和聚合节点之间添加连线
+    const sourcePairInfo = this.gatewayPairs.get(sourceNodeId);
+    const targetPairInfo = this.gatewayPairs.get(targetNodeId);
+    
+    // 如果源节点是包容网关的分流节点，且目标节点是其对应的聚合节点
+    if (sourcePairInfo && sourcePairInfo.gatewayType === 'inclusiveGateway') {
+      // 检查是否是分流节点到聚合节点的直接连线
+      if (sourceNodeId === sourcePairInfo.forkId && targetNodeId === sourcePairInfo.joinId) {
+        console.warn('包容网关的分流节点和聚合节点之间不允许直接连线');
+        setTimeout(() => {
+          this.lf.deleteEdge(id);
+        }, 0);
+        return false;
+      }
+    }
+    
+    // 如果目标节点是包容网关的分流节点，且源节点是其对应的聚合节点
+    if (targetPairInfo && targetPairInfo.gatewayType === 'inclusiveGateway') {
+      if (targetNodeId === targetPairInfo.forkId && sourceNodeId === targetPairInfo.joinId) {
+        console.warn('包容网关的分流节点和聚合节点之间不允许直接连线');
+        setTimeout(() => {
+          this.lf.deleteEdge(id);
+        }, 0);
+        return false;
+      }
     }
 
     // 规则1：检查是否已存在相同的连线
