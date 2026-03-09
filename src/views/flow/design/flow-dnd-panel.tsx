@@ -1,9 +1,9 @@
-import { flowApproveNodes } from '@/views/flow/design/common/config.ts';
 import {
 	type PropType,
 	defineComponent, reactive, onMounted, h,
 } from 'vue';
 import type LogicFlow from '@logicflow/core';
+import { flowApproveNodes } from './common/config.ts';
 
 export const FlowDndPanel = defineComponent({
 	name: 'FlowDndPanel',

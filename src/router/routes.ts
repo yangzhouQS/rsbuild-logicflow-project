@@ -1,5 +1,5 @@
-import type { AppRouteRecordRaw } from '@/types'
-import { FlowDesign } from '@/views/flow/design/flow-design.tsx';
+import type { AppRouteRecordRaw } from '../types';
+import { FlowDesign } from '../views/flow/design/flow-design.tsx';
 
 /** 基础路由 */
 export const constantRoutes: AppRouteRecordRaw[] = [

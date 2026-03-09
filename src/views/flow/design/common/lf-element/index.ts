@@ -4,6 +4,7 @@
  */
 import type LogicFlow from '@logicflow/core';
 import type { GraphModel } from '@logicflow/core';
+import { FlowNodeTypeEnum } from '../config.ts';
 import { ExclusiveGatewayNode } from './exclusive-gateway-node';
 import { ExclusiveGatewayModel } from './exclusive-gateway-model';
 import { InclusiveGatewayNode } from './inclusive-gateway-node';
@@ -24,7 +25,6 @@ import type {
   BranchConfig,
   GatewayPairOptions,
 } from './gateway-pair-manager';
-import { FlowNodeTypeEnum } from '@/views/flow/design/common/config.ts';
 
 // 导出类型
 export type {
