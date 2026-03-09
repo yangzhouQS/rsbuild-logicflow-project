@@ -3,7 +3,7 @@ import type LogicFlow from '@logicflow/core';
 /**
  * 不需要显示右键菜单的节点类型
  */
-const MENU_EXCLUDED_TYPES = ['start', 'end'];
+export const MENU_EXCLUDED_TYPES = ['start', 'end'];
 
 /**
  * 设置节点菜单配置的 Hook

@@ -4,7 +4,12 @@ import type { NodeData } from '@logicflow/core';
 /**
  * 不需要显示配置抽屉的节点类型
  */
-const DRAWER_EXCLUDED_TYPES = ['start', 'end', 'exclusiveGateway', 'inclusiveGateway'];
+export const DRAWER_EXCLUDED_TYPES = ['start', 'end', 'exclusiveGateway', 'inclusiveGateway'];
+
+/**
+ * 禁止进入文本编辑模式的节点类型
+ */
+export const EDIT_EXCLUDED_TYPES = ['start', 'end'];
 
 /**
  * 单击延迟时间（毫秒）- 用于区分单击和双击
@@ -64,12 +69,18 @@ export function useFlowEvents(lf: LogicFlow | null, options: UseFlowEventsOption
 
 		// 监听节点双击事件 - 进入文本编辑模式
 		lf.on('node:dbclick', ({ data }: { data: NodeData }) => {
-			console.log('节点被双击，进入文本编辑模式:', data);
+			console.log('节点被双击:', data);
 
 			// 清除单击定时器，阻止抽屉打开
 			if (clickTimer) {
 				clearTimeout(clickTimer);
 				clickTimer = null;
+			}
+
+			// 检查节点类型是否禁止编辑
+			if (EDIT_EXCLUDED_TYPES.includes(data.type)) {
+				console.log('该节点类型禁止编辑:', data.type);
+				return;
 			}
 
 			// 使用 LogicFlow 的 editText 方法进入文本编辑模式

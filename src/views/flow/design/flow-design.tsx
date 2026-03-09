@@ -10,7 +10,7 @@ import { FlowDndPanel } from './flow-dnd-panel.tsx';
 import { registerFlowModel } from './common/register-flow-model.ts';
 import { getGatewayBranchManager, registerGatewayBranch } from './common/register-gateway-branch';
 import { NodeConfigDrawer } from './components/node-config-drawer.tsx';
-import { useFlowMenu, useFlowEvents, useFlowLayout } from './hooks';
+import { useFlowMenu, useFlowEvents, useFlowLayout } from './common/hooks';
 
 export const FlowDesign = defineComponent({
 	name: 'FlowDesign',
@@ -26,14 +26,14 @@ export const FlowDesign = defineComponent({
 		});
 
 		// 初始化 Hooks
-		const { setupNodeMenu } = useFlowMenu(lfRef.value);
+		/* const { setupNodeMenu } = useFlowMenu(lfRef.value);
 		const { setupNodeClick, clearClickTimer } = useFlowEvents(lfRef.value, {
 			onOpenDrawer: (data: NodeData) => {
 				state.selectedNode = data;
 				state.drawerVisible = true;
 			},
 		});
-		const { autoLayout } = useFlowLayout(lfRef.value);
+		const { autoLayout } = useFlowLayout(lfRef.value); */
 
 		const methods = {
 			getFlowData: () => {
