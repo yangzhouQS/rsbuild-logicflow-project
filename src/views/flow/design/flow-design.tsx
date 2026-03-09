@@ -10,6 +10,7 @@ import { FlowDndPanel } from './flow-dnd-panel.tsx';
 import { registerFlowModel } from './common/register-flow-model.ts';
 import { getGatewayBranchManager, registerGatewayBranch } from './common/register-gateway-branch';
 import { NodeConfigDrawer } from './components/node-config-drawer.tsx';
+import { useFlowMenu, useFlowEvents, useFlowLayout } from './hooks';
 
 export const FlowDesign = defineComponent({
 	name: 'FlowDesign',
@@ -17,9 +18,6 @@ export const FlowDesign = defineComponent({
 	setup() {
 		const lfRef = ref<LogicFlow | null>(null);
 		const containerRef = ref<HTMLDivElement | null>(null);
-		// 用于区分单击和双击的定时器
-		let clickTimer: ReturnType<typeof setTimeout> | null = null;
-		const CLICK_DELAY = 200; // 单击延迟时间（毫秒）
 
 		const state = reactive({
 			initialized: false,
@@ -27,100 +25,19 @@ export const FlowDesign = defineComponent({
 			selectedNode: null as NodeData | null,
 		});
 
+		// 初始化 Hooks
+		const { setupNodeMenu } = useFlowMenu(lfRef.value);
+		const { setupNodeClick, clearClickTimer } = useFlowEvents(lfRef.value, {
+			onOpenDrawer: (data: NodeData) => {
+				state.selectedNode = data;
+				state.drawerVisible = true;
+			},
+		});
+		const { autoLayout } = useFlowLayout(lfRef.value);
+
 		const methods = {
 			getFlowData: () => {
 				console.log(lfRef.value?.getGraphRawData());
-			},
-			/**
-			 * 设置特定节点类型的菜单配置
-			 * 为开始节点和结束节点禁用右键菜单
-			 */
-			setupNodeMenu: () => {
-				const lf = lfRef.value;
-				if (!lf) return;
-				
-				// 为开始节点设置空菜单（禁用右键菜单）
-				lf.setMenuByType({
-					type: 'start',
-					menu: [],
-				});
-				
-				// 为结束节点设置空菜单（禁用右键菜单）
-				lf.setMenuByType({
-					type: 'end',
-					menu: [],
-				});
-			},
-			/**
-			 * 设置节点点击事件监听
-			 * 单击：打开配置抽屉
-			 * 双击：进入文本编辑模式
-			 * 注意：开始节点、结束节点、排他网关、并行网关不显示配置抽屉
-			 */
-			setupNodeClick: () => {
-				const lf = lfRef.value;
-				if (!lf) return;
-
-				// 不需要显示配置抽屉的节点类型
-				const excludedTypes = ['start', 'end', 'exclusiveGateway', 'inclusiveGateway'];
-
-				// 监听节点单击事件（使用延迟来区分单击和双击）
-				lf.on('node:click', ({ data }: { data: NodeData }) => {
-					console.log('节点被点击:', data);
-					
-					// 如果已有定时器，说明是双击的第二次点击，清除定时器不触发抽屉
-					if (clickTimer) {
-						clearTimeout(clickTimer);
-						clickTimer = null;
-						return;
-					}
-					
-					// 设置延迟，等待可能的双击
-					clickTimer = setTimeout(() => {
-						clickTimer = null;
-						
-						// 检查节点类型是否在排除列表中
-						if (excludedTypes.includes(data.type)) {
-							console.log('该节点类型不需要配置:', data.type);
-							return;
-						}
-						
-						state.selectedNode = data;
-						state.drawerVisible = true;
-					}, CLICK_DELAY);
-				});
-
-				// 监听节点双击事件 - 进入文本编辑模式
-				lf.on('node:dbclick', ({ data }: { data: NodeData }) => {
-					console.log('节点被双击，进入文本编辑模式:', data);
-					
-					// 清除单击定时器，阻止抽屉打开
-					if (clickTimer) {
-						clearTimeout(clickTimer);
-						clickTimer = null;
-					}
-					
-					// 使用 LogicFlow 的 editText 方法进入文本编辑模式
-					lf.editText(data.id);
-				});
-
-				// 监听边双击事件 - 进入文本编辑模式
-				lf.on('edge:dbclick', ({ data }: { data: { id: string } }) => {
-					console.log('边被双击，进入文本编辑模式:', data);
-					lf.editText(data.id);
-				});
-			},
-			autoLayout: () => {
-				const layoutConfig = {
-					rankdir: 'LR',
-					align: '',
-					ranker: 'tight-tree',
-					nodesep: 50,
-					ranksep: 80,
-					isDefaultAnchor: true,
-				}
-				lfRef.value?.extension.dagre?.layout(layoutConfig);
-				lfRef.value?.fitView();
 			},
 			// 获取所有网关配对信息
 			getGatewayPairInfos: () => {
@@ -189,16 +106,27 @@ export const FlowDesign = defineComponent({
 
 				lf.render({});
 
-				// 设置节点菜单配置（禁用开始/结束节点的右键菜单）
+				// 保存 LogicFlow 实例引用
 				lfRef.value = lf;
-				methods.setupNodeMenu();
-				
-				// 设置节点点击事件监听
-				methods.setupNodeClick();
+
+				// 使用 Hooks 设置功能
+				// 注意：需要在 lfRef.value 赋值后重新调用 hooks 以获取正确的 lf 实例
+				const { setupNodeMenu: setupMenu } = useFlowMenu(lf);
+				const { setupNodeClick: setupClick } = useFlowEvents(lf, {
+					onOpenDrawer: (data: NodeData) => {
+						state.selectedNode = data;
+						state.drawerVisible = true;
+					},
+				});
+
+				setupMenu();
+				setupClick();
 
 				state.initialized = true;
 			},
 			destroy: () => {
+				// 清除点击定时器
+				clearClickTimer();
 				// 销毁网关分支管理器
 				const manager = getGatewayBranchManager();
 				if (manager) {
@@ -206,6 +134,9 @@ export const FlowDesign = defineComponent({
 				}
 			},
 		};
+
+		// 获取自动布局方法（需要在 lfRef 更新后重新获取）
+		const { autoLayout: layoutMethod } = useFlowLayout(lfRef.value);
 
 		onMounted(() => {
 			methods.init();
@@ -220,7 +151,10 @@ export const FlowDesign = defineComponent({
 				<div class="flow-design page-container">
 					<el-card class={'flow-design-action'}>
 						<el-button onClick={methods.getFlowData}>获取数据</el-button>
-						<el-button onClick={methods.autoLayout}>自动布局</el-button>
+						<el-button onClick={() => {
+							const { autoLayout: layout } = useFlowLayout(lfRef.value);
+							layout();
+						}}>自动布局</el-button>
 					</el-card>
 					<div class={'flow-container'}>
 						{/* 左侧拖拽面板 */}
