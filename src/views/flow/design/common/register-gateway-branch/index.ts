@@ -15,7 +15,7 @@ import {
   type GatewayPairOptions,
   type PairInfo,
   type BranchInfo,
-} from '../common/lf-element';
+} from '../lf-element';
 
 // 模块配置选项
 export interface GatewayBranchOptions extends GatewayPairOptions {
@@ -214,8 +214,8 @@ export function destroyGatewayBranchManager(): void {
 }
 
 // 导出类型和组件
-export { GatewayPairManager } from '../common/lf-element';
-export type { PairInfo, BranchInfo, GatewayPairOptions } from '../common/lf-element';
+export { GatewayPairManager } from '../lf-element';
+export type { PairInfo, BranchInfo, GatewayPairOptions } from '../lf-element';
 
 // 默认导出
 export default {

@@ -1,4 +1,4 @@
-import { registerExclusiveGateway, registerInclusiveGateway } from './common/lf-element';
+import { registerExclusiveGateway, registerInclusiveGateway } from './lf-element';
 import type LogicFlow from '@logicflow/core'
 
 export function registerFlowModel(lf: LogicFlow) {

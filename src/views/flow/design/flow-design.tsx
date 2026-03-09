@@ -6,8 +6,8 @@ import '@logicflow/extension/lib/style/index.css';
 import "./styles/flow-design.less"
 import { logicFlowConfig, logicFlowCustomTheme } from './common/config.ts';
 import { FlowDndPanel } from './flow-dnd-panel.tsx';
-import { registerFlowModel } from './register-flow-model.ts';
-import { getGatewayBranchManager, registerGatewayBranch } from './register-gateway-branch';
+import { registerFlowModel } from './common/register-flow-model.ts';
+import { getGatewayBranchManager, registerGatewayBranch } from './common/register-gateway-branch';
 
 export const FlowDesign = defineComponent({
 	name: 'FlowDesign',

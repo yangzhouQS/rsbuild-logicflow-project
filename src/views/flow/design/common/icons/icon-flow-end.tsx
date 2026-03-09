@@ -1,5 +1,5 @@
 import { defineComponent } from "vue";
-import SvgIcon from "./svg-icon";
+import SvgIcon from "./svg-icon.tsx";
 
 export const IconFlowEnd = defineComponent({
   name: "IconFlowEnd",
