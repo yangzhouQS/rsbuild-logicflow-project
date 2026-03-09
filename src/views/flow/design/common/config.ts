@@ -74,7 +74,7 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 		AutoLayout,
 		Menu,
 		ContextMenu,
-		Control,
+		// Control,
 		Snapshot,
 		SelectionSelect,
 	],
