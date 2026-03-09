@@ -1,4 +1,4 @@
-import { IconExclusive, IconFlowEnd, IconFlowRect, IconFlowStart, IconInclusive } from '@/views/flow/design/icons';
+import { IconExclusive, IconFlowEnd, IconFlowRect, IconFlowStart, IconInclusive } from '../icons';
 import type LogicFlow from '@logicflow/core';
 import {
 	AutoLayout,

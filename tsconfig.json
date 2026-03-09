@@ -19,9 +19,9 @@
 
     /* paths */
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
+    /*"paths": {
+      "@*//*": ["src*//*"]
+    },*/
 
     /* type checking */
     "strict": true,

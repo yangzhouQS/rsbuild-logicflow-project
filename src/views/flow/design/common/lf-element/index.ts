@@ -24,7 +24,7 @@ import type {
   BranchConfig,
   GatewayPairOptions,
 } from './gateway-pair-manager';
-import { FlowNodeTypeEnum } from '@/views/flow/design/config/config';
+import { FlowNodeTypeEnum } from '@/views/flow/design/common/config.ts';
 
 // 导出类型
 export type {

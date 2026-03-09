@@ -1,4 +1,4 @@
-import { flowApproveNodes } from '@/views/flow/design/config/config.ts';
+import { flowApproveNodes } from '@/views/flow/design/common/config.ts';
 import {
 	type PropType,
 	defineComponent, reactive, onMounted, h,

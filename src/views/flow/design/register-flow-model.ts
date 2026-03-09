@@ -1,7 +1,7 @@
-import type { LogicFlowType } from '@/views/flow/design/types/types.ts';
 import { registerExclusiveGateway, registerInclusiveGateway } from './common/lf-element';
+import type LogicFlow from '@logicflow/core'
 
-export function registerFlowModel(lf: LogicFlowType) {
+export function registerFlowModel(lf: LogicFlow) {
   // 注册排他网关节点
   registerExclusiveGateway(lf, {
     defaultWidth: 100,

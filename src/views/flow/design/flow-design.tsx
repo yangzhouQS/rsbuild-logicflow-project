@@ -1,14 +1,13 @@
-import UserTask from '@/views/flow/design/common/user-task.ts';
-import { logicFlowConfig, logicFlowCustomTheme } from '@/views/flow/design/config/config.ts';
-import { FlowDndPanel } from '@/views/flow/design/flow-dnd-panel.tsx';
-import { registerFlowModel } from '@/views/flow/design/register-flow-model.ts';
-import { registerGatewayBranch, getGatewayBranchManager } from '@/views/flow/design/register-gateway-branch';
 import { defineComponent, reactive, onMounted, onUnmounted, ref } from 'vue';
 import LogicFlow from '@logicflow/core';
 import '@logicflow/core/lib/style/index.css';
 import '@logicflow/extension/lib/style/index.css';
 
 import "./styles/flow-design.less"
+import { logicFlowConfig, logicFlowCustomTheme } from './common/config.ts';
+import { FlowDndPanel } from './flow-dnd-panel.tsx';
+import { registerFlowModel } from './register-flow-model.ts';
+import { getGatewayBranchManager, registerGatewayBranch } from './register-gateway-branch';
 
 export const FlowDesign = defineComponent({
 	name: 'FlowDesign',
@@ -78,10 +77,7 @@ export const FlowDesign = defineComponent({
 
 				// 注册自定义节点模型
 				registerFlowModel(lf);
-				lf.register(UserTask);
 
-				// 设置dnd 面板
-				// setDndPanel(lf);
 
 				// 注册网关分支功能
 				// 当拖拽网关节点到画布时，自动创建成对的网关和默认分支
@@ -91,18 +87,7 @@ export const FlowDesign = defineComponent({
 					branchYOffset: 80, // 分支之间的垂直间距
 				});
 
-				lf.render({
-					nodes: [
-						{
-							type: "UserTask",
-							x: 200,
-							y: 100,
-							properties: {
-								disabled: true
-							}
-						}
-					]
-				});
+				lf.render({});
 
 				state.initialized = true;
 

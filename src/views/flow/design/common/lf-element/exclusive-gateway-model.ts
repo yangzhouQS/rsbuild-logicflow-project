@@ -2,13 +2,17 @@
  * 排他网关节点模型
  * 基于RectNode扩展，渲染为菱形外观
  */
-import { uniqueId } from '@/views/flow/design/common/unique-id.ts';
-import { getModelText } from '@/views/flow/design/common/utils.ts';
-import { cloneDeep, isNil } from 'lodash-es';
+import { cloneDeep, isNil, uniqueId } from 'lodash-es';
 import { RectNodeModel } from '@logicflow/core';
 import type { GraphModel } from '@logicflow/core';
 import type LogicFlow from '@logicflow/core';
 import type { IGatewayProperties } from './types';
+
+import { isObject } from 'lodash-es';
+
+export function getModelText(text: string | { value: string }): string {
+	return isObject(text) ? text.value : text;
+}
 
 // 默认配置
 const DEFAULT_CONFIG = {
