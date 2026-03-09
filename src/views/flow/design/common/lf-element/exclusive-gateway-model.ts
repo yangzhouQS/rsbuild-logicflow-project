@@ -59,10 +59,65 @@ export class ExclusiveGatewayModel<
 		  }
 	  }
 
+    // 禁用文本编辑
+    if (this.properties.disableTextEdit) {
+      this.text.editable = false;
+    }
+
+    // 设置节点属性，包含禁用相关配置
 	  Object.assign(this.properties, {
-		  stepName: text
+		  stepName: text,
+      // 禁用相关属性（可通过 data.properties 传入覆盖）
+      disableMenu: this.properties.disableMenu ?? false,
+      disableEdit: this.properties.disableEdit ?? false,
+      disableTextEdit: this.properties.disableTextEdit ?? false,
+      disableDelete: this.properties.disableDelete ?? false,
+      disableMove: this.properties.disableMove ?? false,
+      disableConnect: this.properties.disableConnect ?? false,
 	  });
 	  this.text.value = text;
+  }
+
+  /**
+   * 是否允许移动节点
+   * @returns boolean
+   */
+  isAllowMoveNode(): boolean {
+    if (this.properties.disableEdit || this.properties.disableMove) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * 是否允许删除节点
+   * @returns boolean
+   */
+  isAllowDeleteNode(): boolean {
+    if (this.properties.disableEdit || this.properties.disableDelete) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * 是否允许连接（作为源节点或目标节点）
+   * @returns boolean
+   */
+  isAllowConnect(): boolean {
+    if (this.properties.disableEdit || this.properties.disableConnect) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * 是否显示右键菜单
+   * 可在 Menu 插件回调中通过 node.properties.disableMenu 判断
+   * @returns boolean
+   */
+  isAllowShowMenu(): boolean {
+    return !this.properties.disableMenu;
   }
 
   setAttributes() {
