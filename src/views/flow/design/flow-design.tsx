@@ -55,9 +55,7 @@ export const FlowDesign = defineComponent({
 					isDefaultAnchor: true,
 				}
 				lfRef.value?.extension.dagre?.layout(layoutConfig);
-				// console.log(lfRef.value?.getGraphData());
 				lfRef.value?.fitView();
-				console.log(lfRef.value?.getGraphRawData());
 			},
 			// 获取所有网关配对信息
 			getGatewayPairInfos: () => {

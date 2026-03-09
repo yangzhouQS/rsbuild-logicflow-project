@@ -13,9 +13,6 @@ const DEFAULT_CONFIG = {
   defaultRadius: 25,
   defaultColor: '#67C23A',
   defaultStrokeWidth: 2,
-  // 默认文字偏移
-  defaultRefX: 0,
-  defaultRefY: 40,
 };
 
 export class StartEventModel<
@@ -80,21 +77,31 @@ export class StartEventModel<
 
   /**
    * 获取文本样式
+   * 默认文字在圆心居中显示
    */
   getTextStyle() {
     const style = super.getTextStyle();
     const { textStyle: customTextStyle = {}, refX, refY } = this.properties;
 
-    // 获取文字偏移配置
-    const textRefX = refX ?? DEFAULT_CONFIG.defaultRefX;
-    const textRefY = refY ?? DEFAULT_CONFIG.defaultRefY;
+    // 只有当refX或refY有值时才设置transform
+    const textRefX = refX ?? 0;
+    const textRefY = refY ?? 0;
 
-    return {
+    const resultStyle: Record<string, unknown> = {
       ...style,
-      // 使用 transform 实现文字偏移
-      transform: `matrix(1, 0, 0, 1, ${textRefX}, ${textRefY})`,
+      // 文字水平居中
+      textAnchor: 'middle',
+      // 文字垂直居中
+      dominantBaseline: 'middle',
       ...cloneDeep(customTextStyle),
     };
+
+    // 如果有偏移则添加transform
+    if (textRefX !== 0 || textRefY !== 0) {
+      resultStyle.transform = `matrix(1, 0, 0, 1, ${textRefX}, ${textRefY})`;
+    }
+
+    return resultStyle;
   }
 
   /**

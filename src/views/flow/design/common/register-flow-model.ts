@@ -33,12 +33,14 @@ export function registerFlowModel(lf: LogicFlow) {
   // 注册开始事件节点
   registerStartEvent(lf, {
     defaultRadius: 50,
-    defaultColor: '#67C23A',
+    defaultColor: '#FF6347',
+	  defaultRefY: 0
   });
 
   // 注册结束事件节点
   registerEndEvent(lf, {
     defaultRadius: 50,
-    defaultColor: '#F56C6C',
+    defaultColor: '#FF6347',
+	  defaultRefY: 0
   });
 }
