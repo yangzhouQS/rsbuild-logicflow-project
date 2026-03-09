@@ -1,5 +1,6 @@
 import { defineComponent, reactive, onMounted, onUnmounted, ref } from 'vue';
 import LogicFlow from '@logicflow/core';
+import type { NodeData } from '@logicflow/core';
 import '@logicflow/core/lib/style/index.css';
 import '@logicflow/extension/lib/style/index.css';
 
@@ -8,21 +9,23 @@ import { logicFlowConfig, logicFlowCustomTheme } from './common/config.ts';
 import { FlowDndPanel } from './flow-dnd-panel.tsx';
 import { registerFlowModel } from './common/register-flow-model.ts';
 import { getGatewayBranchManager, registerGatewayBranch } from './common/register-gateway-branch';
+import { NodeConfigDrawer } from './components/node-config-drawer.tsx';
 
 export const FlowDesign = defineComponent({
 	name: 'FlowDesign',
 	props: {},
-	setup(props) {
+	setup() {
 		const lfRef = ref<LogicFlow | null>(null);
 		const containerRef = ref<HTMLDivElement | null>(null);
 
 		const state = reactive({
 			initialized: false,
+			drawerVisible: false,
+			selectedNode: null as NodeData | null,
 		});
 
 		const methods = {
 			getFlowData: () => {
-				// console.log(lfRef.value?.getGraphData());
 				console.log(lfRef.value?.getGraphRawData());
 			},
 			/**
@@ -43,6 +46,31 @@ export const FlowDesign = defineComponent({
 				lf.setMenuByType({
 					type: 'end',
 					menu: [],
+				});
+			},
+			/**
+			 * 设置节点点击事件监听
+			 * 注意：开始节点、结束节点、排他网关、并行网关不显示配置抽屉
+			 */
+			setupNodeClick: () => {
+				const lf = lfRef.value;
+				if (!lf) return;
+
+				// 不需要显示配置抽屉的节点类型
+				const excludedTypes = ['start', 'end', 'exclusiveGateway', 'inclusiveGateway'];
+
+				// 监听节点点击事件
+				lf.on('node:click', ({ data }: { data: NodeData }) => {
+					console.log('节点被点击:', data);
+					
+					// 检查节点类型是否在排除列表中
+					if (excludedTypes.includes(data.type)) {
+						console.log('该节点类型不需要配置:', data.type);
+						return;
+					}
+					
+					state.selectedNode = data;
+					state.drawerVisible = true;
 				});
 			},
 			autoLayout: () => {
@@ -75,6 +103,25 @@ export const FlowDesign = defineComponent({
 				}
 				return null;
 			},
+			// 保存节点配置
+			handleSaveConfig: (config: { id: string; name: string; approver?: string }) => {
+				const lf = lfRef.value;
+				if (!lf || !config.id) return;
+
+				// 更新节点属性
+				lf.setProperties(config.id, {
+					approver: config.approver || '',
+				});
+
+				// 更新节点文本（名称）- 使用 updateText 方法
+				lf.updateText(config.id, config.name);
+
+				console.log('保存节点配置:', config);
+			},
+			// 取消节点配置
+			handleCancelConfig: () => {
+				console.log('取消节点配置');
+			},
 			init: () => {
 				if (state.initialized) {
 					return;
@@ -86,7 +133,6 @@ export const FlowDesign = defineComponent({
 				const lf = new LogicFlow({
 					...logicFlowConfig,
 					container: containerRef.value,
-					// height: 400,
 					autoExpand: true,
 				});
 
@@ -95,7 +141,6 @@ export const FlowDesign = defineComponent({
 
 				// 注册自定义节点模型
 				registerFlowModel(lf);
-
 
 				// 注册网关分支功能
 				// 当拖拽网关节点到画布时，自动创建成对的网关和默认分支
@@ -110,6 +155,9 @@ export const FlowDesign = defineComponent({
 				// 设置节点菜单配置（禁用开始/结束节点的右键菜单）
 				lfRef.value = lf;
 				methods.setupNodeMenu();
+				
+				// 设置节点点击事件监听
+				methods.setupNodeClick();
 
 				state.initialized = true;
 			},
@@ -143,6 +191,14 @@ export const FlowDesign = defineComponent({
 
 						<div ref={ containerRef } id="graph" class="viewport"></div>
 					</div>
+					
+					{/* 节点配置抽屉 */}
+					<NodeConfigDrawer
+						v-model:visible={state.drawerVisible}
+						nodeData={state.selectedNode}
+						onSave={methods.handleSaveConfig}
+						onCancel={methods.handleCancelConfig}
+					/>
 				</div>
 			);
 		};

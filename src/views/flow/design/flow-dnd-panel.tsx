@@ -1,6 +1,7 @@
 import {
 	type PropType,
-	defineComponent, reactive, onMounted, h,
+	defineComponent,
+	h,
 } from 'vue';
 import type LogicFlow from '@logicflow/core';
 import { flowApproveNodes } from './common/config.ts';
@@ -13,8 +14,6 @@ export const FlowDndPanel = defineComponent({
 		},
 	},
 	setup(props) {
-		const state = reactive({});
-
 		const methods = {
 			dragNode: (item: any)=>{
 				props.lf?.dnd.startDrag({
@@ -23,11 +22,6 @@ export const FlowDndPanel = defineComponent({
 				});
 			}
 		};
-
-		onMounted(() => {
-
-		});
-
 		return () => {
 			return (
 				<div class="flow-dnd-panel">
