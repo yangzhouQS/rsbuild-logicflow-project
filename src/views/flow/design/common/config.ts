@@ -28,7 +28,7 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 	isSilentMode: false, // 仅浏览不可编辑模式，默认不开启。
 	stopScrollGraph: true, // 禁止鼠标滚动移动画布。
 	stopZoomGraph: false, // 禁止缩放画布。
-	style: {
+	/* style: {
 		rect: {
 			rx: 5,
 			ry: 5,
@@ -60,7 +60,7 @@ export const logicFlowConfig: Partial<LogicFlow.Options> = {
 			color: '#b85450',
 			fontSize: 12,
 		},
-	},
+	}, */
 	metaKeyMultipleSelected: true,
 	grid: 40,
 	keyboard: {
@@ -103,22 +103,25 @@ export const logicFlowCustomTheme: Partial<LogicFlow.Theme> = {
 			fill: "white",
 		},
 	}, // 确认 textWidth 是否必传
-	polyline: {
-		// stroke: 'red',
-		strokeWidth: 1,
-	},
 	rect: {
 		// 矩形样式
 		radius: 8,
 		stroke: "#3CB371",
-		// width: 200,
-		// height: 40,
+	},
+	circle: {
+		r: 25,
+		stroke: "#FF6347",
+	},
+	polygon: {
+		stroke: "#6495ED",
+	},
+	polyline: {
+		strokeWidth: 1,
 	},
 	arrow: {
 		offset: 8, // 箭头长度
 		verticalLength: 2, // 箭头垂直于边的距离
 	},
-
 	edgeAnimation: {
 		stroke: '#e6a23c',  // 动画颜色（红色）
 		strokeDasharray: '12,4,6,4',

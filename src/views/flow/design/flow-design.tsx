@@ -18,22 +18,14 @@ export const FlowDesign = defineComponent({
 	setup() {
 		const lfRef = ref<LogicFlow | null>(null);
 		const containerRef = ref<HTMLDivElement | null>(null);
+		// 保存清除定时器函数的引用
+		const clearClickTimerRef = ref<(() => void) | null>(null);
 
 		const state = reactive({
 			initialized: false,
 			drawerVisible: false,
 			selectedNode: null as NodeData | null,
 		});
-
-		// 初始化 Hooks
-		/* const { setupNodeMenu } = useFlowMenu(lfRef.value);
-		const { setupNodeClick, clearClickTimer } = useFlowEvents(lfRef.value, {
-			onOpenDrawer: (data: NodeData) => {
-				state.selectedNode = data;
-				state.drawerVisible = true;
-			},
-		});
-		const { autoLayout } = useFlowLayout(lfRef.value); */
 
 		const methods = {
 			getFlowData: () => {
@@ -110,14 +102,16 @@ export const FlowDesign = defineComponent({
 				lfRef.value = lf;
 
 				// 使用 Hooks 设置功能
-				// 注意：需要在 lfRef.value 赋值后重新调用 hooks 以获取正确的 lf 实例
 				const { setupNodeMenu: setupMenu } = useFlowMenu(lf);
-				const { setupNodeClick: setupClick } = useFlowEvents(lf, {
+				const { setupNodeClick: setupClick, clearClickTimer } = useFlowEvents(lf, {
 					onOpenDrawer: (data: NodeData) => {
 						state.selectedNode = data;
 						state.drawerVisible = true;
 					},
 				});
+
+				// 保存清除定时器函数的引用
+				clearClickTimerRef.value = clearClickTimer;
 
 				setupMenu();
 				setupClick();
@@ -126,7 +120,9 @@ export const FlowDesign = defineComponent({
 			},
 			destroy: () => {
 				// 清除点击定时器
-				clearClickTimer();
+				if (clearClickTimerRef.value) {
+					clearClickTimerRef.value();
+				}
 				// 销毁网关分支管理器
 				const manager = getGatewayBranchManager();
 				if (manager) {
@@ -134,9 +130,6 @@ export const FlowDesign = defineComponent({
 				}
 			},
 		};
-
-		// 获取自动布局方法（需要在 lfRef 更新后重新获取）
-		const { autoLayout: layoutMethod } = useFlowLayout(lfRef.value);
 
 		onMounted(() => {
 			methods.init();
