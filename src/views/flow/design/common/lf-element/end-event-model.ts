@@ -41,22 +41,16 @@ export class EndEventModel<
       this.r = DEFAULT_CONFIG.defaultRadius;
     }
 
-    // 禁用文本编辑
-    if (this.properties.disableTextEdit) {
-      this.text.editable = false;
-    }
-
     // 设置节点属性
     Object.assign(this.properties, {
       stepName: '结束',
-      // 禁用相关属性（可通过 data.properties 传入覆盖）
-      disableMenu: this.properties.disableMenu ?? false,
-      disableEdit: this.properties.disableEdit ?? false,
-      disableTextEdit: this.properties.disableTextEdit ?? false,
-      disableDelete: this.properties.disableDelete ?? true, // 结束节点默认不可删除
-      disableMove: this.properties.disableMove ?? false,
-      disableConnect: this.properties.disableConnect ?? false,
     });
+    
+    // 禁用文本编辑
+    this.text = {
+      ...this.text,
+      editable: false,
+    };
     
     this.text.value = this.properties.stepName || '结束';
   }
@@ -154,38 +148,11 @@ export class EndEventModel<
   }
 
   /**
-   * 是否允许移动节点
-   */
-  isAllowMoveNode(): boolean {
-    if (this.properties.disableEdit || this.properties.disableMove) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * 是否允许删除节点
-   */
-  isAllowDeleteNode(): boolean {
-    if (this.properties.disableEdit || this.properties.disableDelete) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * 是否允许连接（作为源节点）
    * 结束节点不允许作为连接源
    */
   isAllowConnect(): boolean {
     return false;
-  }
-
-  /**
-   * 是否显示右键菜单
-   */
-  isAllowShowMenu(): boolean {
-    return !this.properties.disableMenu;
   }
 }
 

@@ -25,6 +25,26 @@ export const FlowDesign = defineComponent({
 				// console.log(lfRef.value?.getGraphData());
 				console.log(lfRef.value?.getGraphRawData());
 			},
+			/**
+			 * 设置特定节点类型的菜单配置
+			 * 为开始节点和结束节点禁用右键菜单
+			 */
+			setupNodeMenu: () => {
+				const lf = lfRef.value;
+				if (!lf) return;
+				
+				// 为开始节点设置空菜单（禁用右键菜单）
+				lf.setMenuByType({
+					type: 'start',
+					menu: [],
+				});
+				
+				// 为结束节点设置空菜单（禁用右键菜单）
+				lf.setMenuByType({
+					type: 'end',
+					menu: [],
+				});
+			},
 			autoLayout: () => {
 				const layoutConfig = {
 					rankdir: 'LR',
@@ -89,9 +109,11 @@ export const FlowDesign = defineComponent({
 
 				lf.render({});
 
-				state.initialized = true;
-
+				// 设置节点菜单配置（禁用开始/结束节点的右键菜单）
 				lfRef.value = lf;
+				methods.setupNodeMenu();
+
+				state.initialized = true;
 			},
 			destroy: () => {
 				// 销毁网关分支管理器

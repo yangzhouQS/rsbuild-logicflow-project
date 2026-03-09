@@ -34,23 +34,11 @@ export function registerFlowModel(lf: LogicFlow) {
   registerStartEvent(lf, {
     defaultRadius: 50,
     defaultColor: '#67C23A',
-    properties: {
-      // 禁止编辑修改名称
-      disableTextEdit: true,
-      // 禁止右键菜单触发
-      disableMenu: true,
-    },
   });
 
   // 注册结束事件节点
   registerEndEvent(lf, {
     defaultRadius: 50,
     defaultColor: '#F56C6C',
-    properties: {
-      // 禁止编辑修改名称
-      disableTextEdit: true,
-      // 禁止右键菜单触发
-      disableMenu: true,
-    },
   });
 }

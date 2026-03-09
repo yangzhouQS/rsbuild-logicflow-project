@@ -23,7 +23,6 @@ export class StartEventNode<
     const { model } = this.props;
     const { x, y, r } = model;
     const style = model.getNodeStyle();
-    const color = model.getColor();
 
     return h(
       'g',
@@ -37,7 +36,7 @@ export class StartEventNode<
         cy: 0,
         r: r,
         fill: style.fill || '#FFFFFF',
-        stroke: style.stroke || color,
+        stroke: style.stroke || '#67C23A',
         strokeWidth: style.strokeWidth || 2,
       }),
     );
